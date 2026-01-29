@@ -1,0 +1,22 @@
+package config
+
+import (
+	"os"
+
+	"github.com/joho/godotenv"
+)
+
+type Config struct {
+	Port  string
+	DBUri string
+}
+
+func LoadConfig() (*Config, error) {
+	// Load .env file if it exists
+	_ = godotenv.Load()
+
+	return &Config{
+		Port:  os.Getenv("PORT"),
+		DBUri: os.Getenv("MONGODB_URI"),
+	}, nil
+}
