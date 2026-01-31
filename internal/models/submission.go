@@ -22,8 +22,8 @@ type SubmissionResponse struct {
 
 /* Request models */
 type CreateSubmissionRequest struct {
-	SurveyID  bson.ObjectID        `json:"survey_id" binding:"required"`
-	Responses []SubmissionResponse `json:"responses" binding:"required"`
+	SurveyToken string               `json:"survey_token" binding:"required"`
+	Responses   []SubmissionResponse `json:"responses" binding:"required"`
 }
 
 /* Response models */
