@@ -2,7 +2,9 @@ package routes
 
 import (
 	"osp/internal/config"
+	"osp/internal/handlers"
 	"osp/internal/middleware"
+	"osp/internal/services"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -29,4 +31,18 @@ func SetupRouter(cfg *config.Config, client *mongo.Client) *gin.Engine {
 }
 
 func setupAPIRoutes(api *gin.RouterGroup, cfg *config.Config, client *mongo.Client) {
+	// Initialize MongoDB collection
+	db := client.Database("osp")
+	surveysCollection := db.Collection("surveys")
+
+	// Initialize services and handlers
+	surveyService := services.NewSurveyService(surveysCollection)
+	surveyHandler := handlers.NewSurveyHandler(surveyService)
+
+	// Surveys routes
+	surveys := api.Group("/surveys")
+	{
+		surveys.POST("", surveyHandler.CreateSurvey)
+		surveys.GET("/:token", surveyHandler.GetSurvey)
+	}
 }
