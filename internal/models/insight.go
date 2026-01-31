@@ -23,7 +23,7 @@ type InsightBatch struct {
 	BatchNumber      int            `bson:"batch_number" json:"batch_number"`
 	Question         Question       `bson:"question" json:"question"`
 	AggregatedAnswer map[string]int `bson:"aggregated_answer,omitempty" json:"aggregated_answer,omitempty"`
-	TextualAnswers   []string       `bson:"textual_answers,omitempty" json:"textual_answers,omitempty"`
+	TextualAnswers   *[]string      `bson:"textual_answers,omitempty" json:"textual_answers,omitempty"`
 	Summary          *string        `bson:"summary,omitempty" json:"summary,omitempty"`
 	ErrorLog         *string        `bson:"error_log,omitempty" json:"error_log,omitempty"`
 }
@@ -60,4 +60,23 @@ type GetInsightsRequest struct {
 
 type GetInsightsResponse struct {
 	Data []*Insight `json:"data"`
+}
+
+// LLM request/response structures type Message struct { Role string `json:"role"` Content string `json:"content"` }
+type ChatCompletionMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+type ChatCompletionRequest struct {
+	Messages    []ChatCompletionMessage `json:"messages"`
+	Temperature float64                 `json:"temperature"`
+	TopP        float64                 `json:"top_p"`
+	MaxTokens   int                     `json:"max_tokens"`
+	Model       string                  `json:"model"`
+}
+type ChatCompletionChoice struct {
+	Message ChatCompletionMessage `json:"message"`
+}
+type ChatCompletionResponse struct {
+	Choices []ChatCompletionChoice `json:"choices"`
 }
