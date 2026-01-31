@@ -26,6 +26,27 @@ func (h *SurveyHandler) CreateSurvey(c *gin.Context) {
 		})
 		return
 	}
+	// Specfication validation
+	for _, question := range req.Questions {
+		if question.Type == models.QuestionTypeMultipleChoice && question.Specification.MultipleChoiceSpecification == nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "MultipleChoiceSpecification is required for MULTIPLE_CHOICE question type",
+			})
+			return
+		}
+		if question.Type == models.QuestionTypeLikert && question.Specification.LikertSpecification == nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "LikertSpecification is required for LIKERT question type",
+			})
+			return
+		}
+		if question.Type == models.QuestionTypeTextbox && question.Specification.TextboxSpecification == nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "TextboxSpecification is required for TEXTBOX question type",
+			})
+			return
+		}
+	}
 
 	item, err := h.surveyService.CreateSurvey(c.Request.Context(), &req)
 	if err != nil {
