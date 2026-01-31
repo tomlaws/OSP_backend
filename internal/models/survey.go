@@ -26,9 +26,9 @@ type Question struct {
 type QuestionType string
 
 const (
-	Textbox        QuestionType = "TEXTBOX"
-	MultipleChoice QuestionType = "MULTIPLE_CHOICE"
-	Likert         QuestionType = "LIKERT"
+	QuestionTypeTextbox        QuestionType = "TEXTBOX"
+	QuestionTypeMultipleChoice QuestionType = "MULTIPLE_CHOICE"
+	QuestionTypeLikert         QuestionType = "LIKERT"
 )
 
 type QuestionSpecification struct {
@@ -38,18 +38,18 @@ type QuestionSpecification struct {
 }
 
 type TextboxSpecification struct {
-	MaxLength int `bson:"max_length" json:"max_length"`
+	MaxLength int `bson:"max_length" json:"max_length" binding:"required,gt=0,lte=250"` // max 250 characters
 }
 
 type MultipleChoiceSpecification struct {
-	Options []string `bson:"options" json:"options"`
+	Options []string `bson:"options" json:"options" binding:"required,min=2,max=20"`
 }
 
 type LikertSpecification struct {
-	Min      int    `bson:"min" json:"min"`
-	Max      int    `bson:"max" json:"max"`
-	MinLabel string `bson:"min_label" json:"min_label"`
-	MaxLabel string `bson:"max_label" json:"max_label"`
+	Min      int     `bson:"min" json:"min" binding:"required"`
+	Max      int     `bson:"max" json:"max" binding:"required,gtfield=Min"`
+	MinLabel *string `bson:"min_label" json:"min_label"`
+	MaxLabel *string `bson:"max_label" json:"max_label"`
 }
 
 /* Request models */
