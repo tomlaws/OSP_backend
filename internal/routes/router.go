@@ -34,6 +34,7 @@ func setupAPIRoutes(api *gin.RouterGroup, cfg *config.Config, client *mongo.Clie
 	// Initialize MongoDB collection
 	db := client.Database("osp")
 	surveysCollection := db.Collection("surveys")
+	submissionsCollection := db.Collection("submissions")
 
 	// Initialize services and handlers
 	surveyService := services.NewSurveyService(surveysCollection)
@@ -44,5 +45,12 @@ func setupAPIRoutes(api *gin.RouterGroup, cfg *config.Config, client *mongo.Clie
 	{
 		surveys.POST("", surveyHandler.CreateSurvey)
 		surveys.GET("/:token", surveyHandler.GetSurvey)
+	}
+	// Submissions routes
+	submissionService := services.NewSubmissionService(submissionsCollection)
+	submissionHandler := handlers.NewSubmissionHandler(submissionService)
+	submissions := api.Group("/submissions")
+	{
+		submissions.POST("", submissionHandler.CreateSubmission)
 	}
 }
