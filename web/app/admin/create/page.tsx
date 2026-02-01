@@ -79,63 +79,78 @@ export default function CreateSurvey() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Create New Survey</h1>
-      <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 shadow rounded-lg">
+    <div className="max-w-4xl mx-auto pb-24">
+      <div className="mb-12 border-b-4 border-black pb-4">
+        <h1 className="text-4xl font-black uppercase tracking-tighter">New Survey Construction</h1>
+      </div>
+      
+      <form onSubmit={handleSubmit} className="space-y-12">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Survey Name</label>
+          <label className="block text-xs font-bold uppercase tracking-widest text-black mb-2">Survey Designation</label>
           <input
             type="text"
             required
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+            className="block w-full border-2 border-black bg-white p-4 text-xl font-bold focus:ring-0 focus:border-[#D80000] outline-none transition-colors"
+            placeholder="ENTER SURVEY NAME"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
         </div>
 
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Questions</h3>
+        <div className="space-y-8">
+          <div className="flex items-center justify-between border-b-2 border-black pb-2">
+            <h3 className="text-2xl font-bold uppercase tracking-tight">Questions Sequence</h3>
+            <span className="font-mono text-sm bg-black text-white px-2 py-1">{questions.length} ITEMS</span>
+          </div>
+
           {questions.map((q, idx) => (
-            <div key={idx} className="border p-4 rounded-md relative bg-gray-50">
+            <div key={idx} className="border-2 border-black p-6 relative bg-white group hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-shadow duration-200">
+                <div className="absolute -top-4 -left-4 bg-black text-white w-8 h-8 flex items-center justify-center font-bold font-mono border-2 border-white">
+                    {idx + 1}
+                </div>
+                
                 <button 
                   type="button" 
                   onClick={() => removeQuestion(idx)} 
-                  className="absolute top-2 right-2 text-red-500 text-sm"
+                  className="absolute top-4 right-4 text-xs font-bold uppercase hover:text-[#D80000] hover:underline"
                 >
-                    Remove
+                    [Remove]
                 </button>
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Question Type</label>
+                
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mt-2">
+                <div className="col-span-12 md:col-span-4">
+                  <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Type</label>
                   <select
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2"
+                    className="block w-full border-2 border-black bg-white p-3 font-bold focus:ring-0 focus:border-[#D80000] outline-none appearance-none rounded-none"
                     value={q.type}
                     onChange={(e) => updateQuestion(idx, 'type', e.target.value)}
                   >
-                    <option value="TEXTBOX">Textbox</option>
-                    <option value="MULTIPLE_CHOICE">Multiple Choice</option>
-                    <option value="LIKERT">Likert Scale</option>
+                    <option value="TEXTBOX">TEXTBOX</option>
+                    <option value="MULTIPLE_CHOICE">MULTIPLE CHOICE</option>
+                    <option value="LIKERT">LIKERT SCALE</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Question Text</label>
+                
+                <div className="col-span-12 md:col-span-8">
+                  <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Prompt</label>
                   <input
                     type="text"
                     required
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2"
+                    className="block w-full border-b-2 border-black bg-transparent p-3 font-medium focus:ring-0 focus:border-[#D80000] outline-none rounded-none"
+                    placeholder="Enter question text here..."
                     value={q.text}
                     onChange={(e) => updateQuestion(idx, 'text', e.target.value)}
                   />
                 </div>
 
                 {q.type === 'TEXTBOX' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Max Length
+                  <div className="col-span-12 md:col-span-6 bg-gray-50 p-4 border border-black">
+                    <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">
+                      Max Character Length
                     </label>
                     <input
                       type="number"
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2"
+                      className="block w-full bg-white border border-gray-400 p-2 font-mono text-sm"
                       value={q.specification?.max_length || 100}
                       onChange={(e) =>
                         updateSpec(idx, 'max_length', parseInt(e.target.value))
@@ -145,74 +160,76 @@ export default function CreateSurvey() {
                 )}
 
                 {q.type === 'LIKERT' && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Min Value
-                      </label>
-                      <input
-                        type="number"
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2"
-                        value={q.specification?.min || 1}
-                        onChange={(e) =>
-                          updateSpec(idx, 'min', parseInt(e.target.value))
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Max Value
-                      </label>
-                      <input
-                        type="number"
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2"
-                        value={q.specification?.max || 5}
-                        min={(q.specification?.min || 1) + 1}
-                        max={10}
-                        onChange={(e) =>
-                          updateSpec(idx, 'max', parseInt(e.target.value))
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Min Label (Optional)
-                      </label>
-                      <input
-                        type="text"
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2"
-                        placeholder="e.g. Strongly Disagree"
-                        value={q.specification?.min_label || ''}
-                        onChange={(e) =>
-                          updateSpec(idx, 'min_label', e.target.value)
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Max Label (Optional)
-                      </label>
-                      <input
-                        type="text"
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2"
-                        placeholder="e.g. Strongly Agree"
-                        value={q.specification?.max_label || ''}
-                        onChange={(e) =>
-                          updateSpec(idx, 'max_label', e.target.value)
-                        }
-                      />
+                  <div className="col-span-12 bg-gray-50 p-4 border border-black">
+                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                        <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">
+                            Min Value
+                        </label>
+                        <input
+                            type="number"
+                            className="block w-full bg-white border border-gray-400 p-2 font-mono text-sm"
+                            value={q.specification?.min || 1}
+                            onChange={(e) =>
+                            updateSpec(idx, 'min', parseInt(e.target.value))
+                            }
+                        />
+                        </div>
+                        <div>
+                        <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">
+                            Max Value
+                        </label>
+                        <input
+                            type="number"
+                            className="block w-full bg-white border border-gray-400 p-2 font-mono text-sm"
+                            value={q.specification?.max || 5}
+                            min={(q.specification?.min || 1) + 1}
+                            max={10}
+                            onChange={(e) =>
+                            updateSpec(idx, 'max', parseInt(e.target.value))
+                            }
+                        />
+                        </div>
+                        <div>
+                        <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">
+                            Min Label
+                        </label>
+                        <input
+                            type="text"
+                            className="block w-full bg-white border border-gray-400 p-2 font-mono text-sm"
+                            placeholder="e.g. Strongly Disagree"
+                            value={q.specification?.min_label || ''}
+                            onChange={(e) =>
+                            updateSpec(idx, 'min_label', e.target.value)
+                            }
+                        />
+                        </div>
+                        <div>
+                        <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">
+                            Max Label
+                        </label>
+                        <input
+                            type="text"
+                            className="block w-full bg-white border border-gray-400 p-2 font-mono text-sm"
+                            placeholder="e.g. Strongly Agree"
+                            value={q.specification?.max_label || ''}
+                            onChange={(e) =>
+                            updateSpec(idx, 'max_label', e.target.value)
+                            }
+                        />
+                        </div>
                     </div>
                   </div>
                 )}
 
                 {q.type === 'MULTIPLE_CHOICE' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                  <div className="col-span-12 bg-gray-50 p-4 border border-black">
+                    <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">
                       Options (comma separated)
                     </label>
                     <input
                       type="text"
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2"
+                      className="block w-full bg-white border border-gray-400 p-2 font-mono text-sm"
                       placeholder="Option 1, Option 2, Option 3"
                       onChange={(e) =>
                         updateSpec(idx, 'options', e.target.value.split(',').map((s) => s.trim()))
@@ -227,16 +244,16 @@ export default function CreateSurvey() {
           <button
             type="button"
             onClick={addQuestion}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-indigo-700 bg-indigo-100 hover:bg-indigo-200"
+            className="w-full py-4 border-2 border-dashed border-gray-400 text-sm font-bold uppercase text-gray-500 hover:border-black hover:text-black hover:bg-gray-50 transition-all"
           >
-            Add Question
+            + Add Another Question
           </button>
         </div>
 
-        <div className="flex justify-end pt-4">
+        <div className="flex justify-end pt-8 border-t-2 border-black">
           <button
             type="submit"
-            className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+            className="inline-flex justify-center py-4 px-8 border-2 border-black text-sm font-bold uppercase text-white bg-black hover:bg-[#D80000] hover:border-[#D80000] shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
           >
             Create Survey
           </button>
