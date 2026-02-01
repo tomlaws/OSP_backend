@@ -21,7 +21,7 @@ export default function InsightDetails({ params }: { params: Promise<{ id: strin
       .finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className="text-xl font-bold tracking-tight uppercase">Loading_Data...</div>;
   if (!insight) return <div>Insight not found</div>;
 
   return (

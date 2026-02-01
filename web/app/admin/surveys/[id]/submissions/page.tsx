@@ -35,7 +35,7 @@ export default function SurveySubmissions({ params }: { params: Promise<{ id: st
     fetchData();
   }, [id]);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className="text-xl font-bold tracking-tight uppercase">Loading_Data...</div>;
   if (!survey) return <div>Survey not found</div>;
 
   return (

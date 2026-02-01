@@ -7,7 +7,7 @@ import { Survey, Insight } from '@/types';
 
 export default function AdminDashboard() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div className="text-xl font-bold tracking-tight uppercase">Loading_Data...</div>}>
       <AdminDashboardContent />
     </Suspense>
   );
