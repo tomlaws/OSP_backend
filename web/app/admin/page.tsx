@@ -70,79 +70,80 @@ function AdminDashboardContent() {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className="text-xl font-bold tracking-tight uppercase">Loading_Data...</div>;
 
   return (
     <div>
-      <div className="md:flex md:items-center md:justify-between mb-6">
-        <div className="flex-1 min-w-0">
-          <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+      <div className="md:flex md:items-center md:justify-between mb-12">
+        <div className="flex-1 min-w-0 border-b-4 border-black pb-2">
+          <h2 className="text-4xl font-black uppercase tracking-tighter text-black">
             Surveys
           </h2>
         </div>
-        <div className="mt-4 flex md:mt-0 md:ml-4">
+        <div className="mt-4 flex md:mt-0 md:ml-12 self-end">
           <Link
             href="/admin/create"
-            className="ml-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="inline-flex items-center px-6 py-3 border-2 border-black text-sm font-bold uppercase text-white bg-black hover:bg-[#D80000] hover:border-[#D80000] transition-colors duration-200"
           >
-            Create New Survey
+            + Create New
           </Link>
         </div>
       </div>
 
-      <div className="bg-white shadow overflow-hidden sm:rounded-md">
-        <ul className="divide-y divide-gray-200">
+      <div className="border-t-2 border-black">
+        <ul className="divide-y-2 divide-black">
           {surveys.map((survey) => {
             const insight = insights.find(i => i.survey_id === survey.id);
             const shareUrl = `${window.location.origin}/survey/${survey.token}`;
 
             return (
-              <li key={survey.id}>
-                <div className="px-4 py-4 sm:px-6">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-indigo-600 truncate">
-                      {survey.name}
-                    </p>
+              <li key={survey.id} className="group hover:bg-gray-50 transition-colors duration-200">
+                <div className="py-6">
+                  <div className="flex items-start justify-between">
+                    <div>
+                        <p className="text-2xl font-bold uppercase tracking-tight text-black mb-1">
+                        {survey.name}
+                        </p>
+                        <p className="text-sm font-mono text-gray-500 uppercase tracking-widest">
+                            Token: {survey.token}
+                        </p>
+                    </div>
+                    
                     <div className="ml-2 flex-shrink-0 flex">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                      <span className="px-3 py-1 text-xs font-bold uppercase border border-black bg-white text-black">
                         Active
                       </span>
                     </div>
                   </div>
-                  <div className="mt-2 sm:flex sm:justify-between">
-                    <div className="sm:flex">
-                      <p className="flex items-center text-sm text-gray-500">
-                        Token: {survey.token}
-                      </p>
-                    </div>
-                  </div>
-                   <div className="mt-4 flex space-x-4 text-sm">
-                      <a href={shareUrl} target="_blank" className="text-indigo-600 hover:text-indigo-900">
+                  
+                   <div className="mt-6 flex flex-wrap gap-x-8 gap-y-4 text-sm font-bold uppercase tracking-wide">
+                      <a href={shareUrl} target="_blank" className="text-black hover:text-[#D80000] hover:underline underline-offset-4">
                         Share Link
                       </a>
-                      <button 
-                        onClick={() => handleDeleteSurvey(survey.id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        Delete
-                      </button>
-
-                      <Link href={`/admin/surveys/${survey.id}/submissions`} className="text-gray-600 hover:text-gray-900 font-medium">
+                      
+                      <Link href={`/admin/surveys/${survey.id}/submissions`} className="text-black hover:text-[#D80000] hover:underline underline-offset-4">
                         View Submissions
                       </Link>
                       
                       {insight ? (
-                        <Link href={`/admin/insights/${insight.id}`} className="text-purple-600 hover:text-purple-900 font-medium">
-                          View Insights ({insight.status})
+                        <Link href={`/admin/insights/${insight.id}`} className="text-black hover:text-[#D80000] hover:underline underline-offset-4">
+                          Insights <span className="text-[#D80000]">({insight.status})</span>
                         </Link>
                       ) : (
                         <Link 
                           href={`/admin/surveys/${survey.id}/generate-insight`}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-black hover:text-[#D80000] hover:underline underline-offset-4"
                         >
                           Generate Insight
                         </Link>
                       )}
+
+                      <button 
+                        onClick={() => handleDeleteSurvey(survey.id)}
+                        className="text-gray-400 hover:text-[#D80000] ml-auto"
+                      >
+                        Delete
+                      </button>
                       
                    </div>
                 </div>
@@ -150,7 +151,7 @@ function AdminDashboardContent() {
             );
           })}
           {surveys.length === 0 && (
-             <div className="px-4 py-4 sm:px-6 text-center text-gray-500">
+             <div className="py-12 text-center text-gray-500 font-bold uppercase">
                 No surveys found. Create one to get started.
              </div>
           )}
@@ -158,21 +159,21 @@ function AdminDashboardContent() {
       </div>
 
       {total > pageSize && (
-        <div className="flex justify-between items-center mt-4 pb-10">
+        <div className="flex justify-between items-center mt-12 py-6 border-t-2 border-black">
           <button
             onClick={() => updatePage(Math.max(1, page - 1))}
             disabled={page === 1}
-            className="px-4 py-2 border rounded-md bg-white disabled:opacity-50"
+            className="px-6 py-3 border-2 border-black text-sm font-bold uppercase disabled:opacity-30 hover:bg-black hover:text-white transition-colors"
           >
             Previous
           </button>
-          <span>
-            Page {page} of {Math.ceil(total / pageSize)}
+          <span className="font-mono text-sm">
+            PAGE {page} / {Math.ceil(total / pageSize)}
           </span>
           <button
             onClick={() => updatePage(page + 1)}
             disabled={page >= Math.ceil(total / pageSize)}
-            className="px-4 py-2 border rounded-md bg-white disabled:opacity-50"
+            className="px-6 py-3 border-2 border-black text-sm font-bold uppercase disabled:opacity-30 hover:bg-black hover:text-white transition-colors"
           >
             Next
           </button>
