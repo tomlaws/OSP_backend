@@ -82,7 +82,14 @@ func (s *InsightService) GetInsights(ctx context.Context, offset, limit int64, s
 		filter["survey_id"] = bsonSurveyID
 	}
 
-	opts := options.Find().SetSkip(offset).SetLimit(limit)
+	opts := options.Find().
+		SetSkip(offset).
+		SetLimit(limit).
+		SetSort(bson.D{
+			{Key: "completed_at", Value: -1},
+			{Key: "updated_at", Value: -1},
+			{Key: "created_at", Value: -1},
+		})
 
 	cursor, err := s.collection.Find(ctx, filter, opts)
 	if err != nil {
