@@ -264,3 +264,4 @@ This project utilizes Artificial Intelligence assistance, primarily for:
 *   **Code Quality Enhancement**: Refactoring and optimizing code structure.
 *   **Testing**: Generating comprehensive unit tests and increasing coverage.
 *   **Documentation**: Drafting and refining documentation, including this README.
+*   **Frontend Development**: Building the Next.js frontend application with AI assistance.
