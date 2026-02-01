@@ -28,15 +28,6 @@ type InsightBatch struct {
 	ErrorLog         *string         `bson:"error_log,omitempty" json:"error_log,omitempty"`
 }
 
-type ChatCompletionRequestLog struct {
-	ID          bson.ObjectID           `bson:"_id" json:"id"`
-	InsightID   bson.ObjectID           `bson:"insight_id" json:"insight_id"`
-	BatchNumber int                     `bson:"batch_number" json:"batch_number"`
-	Request     ChatCompletionRequest   `bson:"request" json:"request"`
-	Response    *ChatCompletionResponse `bson:"response,omitempty" json:"response,omitempty"`
-	CreatedAt   time.Time               `bson:"created_at" json:"created_at"`
-}
-
 type ContextType string
 
 const (
@@ -69,23 +60,4 @@ type GetInsightsRequest struct {
 
 type GetInsightsResponse struct {
 	Data []*Insight `json:"data"`
-}
-
-// LLM request/response structures type Message struct { Role string `json:"role"` Content string `json:"content"` }
-type ChatCompletionMessage struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-type ChatCompletionRequest struct {
-	Messages    []ChatCompletionMessage `json:"messages"`
-	Temperature float64                 `json:"temperature"`
-	TopP        float64                 `json:"top_p"`
-	MaxTokens   int                     `json:"max_tokens"`
-	Model       string                  `json:"model"`
-}
-type ChatCompletionChoice struct {
-	Message ChatCompletionMessage `json:"message"`
-}
-type ChatCompletionResponse struct {
-	Choices []ChatCompletionChoice `json:"choices"`
 }

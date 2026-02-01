@@ -170,14 +170,17 @@ func (s *InsightService) preprocessInsight(insight *models.Insight) error {
 	// Build answer batches
 	insightBatches := []models.InsightBatch{}
 	for _, question := range survey.Questions {
-		// Append the batch to the slice first, then mutate the slice element (avoid copy semantics pitfalls).
-		aggMap := make(map[string]int)
-		insightBatches = append(insightBatches, models.InsightBatch{
-			BatchNumber:      len(insightBatches) + 1,
-			Question:         question,
-			AggregatedAnswer: &aggMap,
-			TextualAnswers:   &[]string{},
-		})
+		insightBatch := &models.InsightBatch{
+			BatchNumber: len(insightBatches) + 1,
+			Question:    question,
+		}
+		if question.Type == models.QuestionTypeMultipleChoice || question.Type == models.QuestionTypeLikert {
+			aggMap := make(map[string]int)
+			insightBatch.AggregatedAnswer = &aggMap
+		} else {
+			insightBatch.TextualAnswers = &[]string{}
+		}
+		insightBatches = append(insightBatches, *insightBatch)
 		currentBatch := &insightBatches[len(insightBatches)-1]
 
 		answers := responseMap[question.ID]
@@ -228,7 +231,7 @@ func (s *InsightService) ProcessInsight(insight models.Insight) error {
 			// Already processed
 			continue
 		}
-		summary, err := s.processInsightBatch(context.TODO(), insight.ContextType, batch)
+		summary, err := s.processInsightBatch(context.TODO(), insight.ID, insight.ContextType, batch)
 		insight.Batches[i].Summary = summary
 		if err != nil {
 			errMsg := err.Error()
@@ -257,7 +260,7 @@ func (s *InsightService) ProcessInsight(insight models.Insight) error {
 	}
 	if allProcessed {
 		// Meta-summary (overall analysis) after all batches are processed.
-		analysis, analysisErr := s.generateMetaSummary(context.TODO(), insight)
+		analysis, analysisErr := s.generateMetaSummary(insight)
 		if analysisErr != nil {
 			errMsg := analysisErr.Error()
 			update := bson.M{
@@ -289,7 +292,7 @@ func (s *InsightService) ProcessInsight(insight models.Insight) error {
 	return nil
 }
 
-func (s *InsightService) processInsightBatch(ctx context.Context, contextType models.ContextType, batch models.InsightBatch) (*string, error) {
+func (s *InsightService) processInsightBatch(ctx context.Context, insightID bson.ObjectID, contextType models.ContextType, batch models.InsightBatch) (*string, error) {
 	// LLM processing
 	var payload string
 
@@ -323,16 +326,17 @@ func (s *InsightService) processInsightBatch(ctx context.Context, contextType mo
 		Model:       "openai/gpt-4o-mini",
 	}
 
-	resp, err := s.chatCompletionService.NewRequest(reqBody)
+	ref := fmt.Sprintf("insight:%s batch:%d", insightID.Hex(), batch.BatchNumber)
+	resp, err := s.chatCompletionService.NewRequest(reqBody, &ref)
 	if err != nil {
 		return nil, err
 	}
 	return resp, nil
 }
 
-func (s *InsightService) generateMetaSummary(ctx context.Context, insight models.Insight) (*string, error) {
+func (s *InsightService) generateMetaSummary(insight models.Insight) (*string, error) {
 	meta := "Create an overall analysis across all questions.\n"
-	meta += "For each question, use the batch summaries (or distributions) and then provide:\n"
+	meta += "Provide:\n"
 	meta += "- key themes\n- strongest signals\n- notable outliers\n- actionable recommendations\n"
 	meta += "\nBatches:\n"
 
@@ -370,7 +374,8 @@ func (s *InsightService) generateMetaSummary(ctx context.Context, insight models
 		Model:       "openai/gpt-4o-mini",
 	}
 
-	resp, err := s.chatCompletionService.NewRequest(reqBody)
+	ref := fmt.Sprintf("insight:%s meta", insight.ID.Hex())
+	resp, err := s.chatCompletionService.NewRequest(reqBody, &ref)
 	if err != nil {
 		return nil, err
 	}

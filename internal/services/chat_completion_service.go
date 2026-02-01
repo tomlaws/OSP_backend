@@ -6,12 +6,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"time"
 
 	"osp/internal/models"
 
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
@@ -27,7 +29,21 @@ func NewChatCompletionService(collection *mongo.Collection) *ChatCompletionServi
 	}
 }
 
-func (s *ChatCompletionService) NewRequest(reqBody models.ChatCompletionRequest) (*string, error) {
+func (s *ChatCompletionService) NewRequest(reqBody models.ChatCompletionRequest, reference *string) (*string, error) {
+	ctx := context.Background()
+
+	// Insert request log first (best-effort) so every attempted request is tracked.
+	logEntry := models.ChatCompletionRequestLog{
+		ID:        bson.NewObjectID(),
+		Request:   reqBody,
+		Response:  nil,
+		Reference: reference,
+		CreatedAt: time.Now(),
+	}
+	if _, err := s.collection.InsertOne(ctx, logEntry); err != nil {
+		log.Printf("chat completion log insert failed: %v", err)
+	}
+
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
 		return nil, fmt.Errorf("GITHUB_TOKEN is not set")
@@ -38,7 +54,6 @@ func (s *ChatCompletionService) NewRequest(reqBody models.ChatCompletionRequest)
 		return nil, err
 	}
 
-	ctx := context.Background()
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, githubModelsChatCompletionsURL, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return nil, err
@@ -63,6 +78,13 @@ func (s *ChatCompletionService) NewRequest(reqBody models.ChatCompletionRequest)
 	if err := json.Unmarshal(body, &chatCompletionResponse); err != nil {
 		return nil, err
 	}
+
+	// Best-effort: attach the response to the request log.
+	_, _ = s.collection.UpdateByID(ctx, logEntry.ID, bson.M{
+		"$set": bson.M{
+			"response": chatCompletionResponse,
+		},
+	})
 
 	c, err := firstChoiceContent(&chatCompletionResponse)
 	if err != nil {
