@@ -144,19 +144,21 @@ export default function CreateSurvey() {
                 </div>
 
                 {q.type === 'TEXTBOX' && (
-                  <div className="col-span-12 md:col-span-6 bg-gray-50 p-4 border border-black">
+                    <div className="col-span-12 md:col-span-6 bg-gray-50 p-4 border border-black">
                     <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">
                       Max Character Length
                     </label>
                     <input
                       type="number"
+                      min="1"
+                      max="250"
                       className="block w-full bg-white border border-gray-400 p-2 font-mono text-sm"
                       value={q.specification?.max_length || 100}
                       onChange={(e) =>
-                        updateSpec(idx, 'max_length', parseInt(e.target.value))
+                      updateSpec(idx, 'max_length', parseInt(e.target.value))
                       }
                     />
-                  </div>
+                    </div>
                 )}
 
                 {q.type === 'LIKERT' && (
