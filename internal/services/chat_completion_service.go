@@ -19,6 +19,11 @@ import (
 
 const githubModelsChatCompletionsURL = "https://models.github.ai/inference/chat/completions"
 
+// IChatCompletionService abstracts the external chat completion API
+type IChatCompletionService interface {
+	NewRequest(reqBody models.ChatCompletionRequest, reference *string) (*string, error)
+}
+
 type ChatCompletionService struct {
 	collection *mongo.Collection
 }

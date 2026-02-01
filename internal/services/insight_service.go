@@ -6,45 +6,66 @@ import (
 	"fmt"
 	"log"
 	"osp/internal/models"
+	"osp/internal/repositories"
 	"time"
 
 	"github.com/hibiken/asynq"
 	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-type InsightService struct {
-	collection            *mongo.Collection
-	chatCompletionService *ChatCompletionService
-	jobSystem             *models.JobSystem
+type IInsightService interface {
+	CreateInsight(ctx context.Context, req *models.CreateInsightRequest) (*models.Insight, error)
+	GetInsights(ctx context.Context, offset, limit int64, surveyID *string) ([]*models.Insight, error)
+	ProcessInsight(insightID bson.ObjectID) error
+	RegisterHandlers(mux *asynq.ServeMux)
 }
 
-func NewInsightService(collection *mongo.Collection, chatCompletionService *ChatCompletionService, jobSystem *models.JobSystem) *InsightService {
-	insightService := &InsightService{
-		collection:            collection,
+type JobEnqueuer interface {
+	Enqueue(task *asynq.Task, opts ...asynq.Option) (*asynq.TaskInfo, error)
+}
+
+type InsightService struct {
+	insightRepo           repositories.InsightRepository
+	surveyRepo            repositories.SurveyRepository
+	submissionRepo        repositories.SubmissionRepository
+	chatCompletionService IChatCompletionService
+	jobEnqueuer           JobEnqueuer
+}
+
+func NewInsightService(
+	insightRepo repositories.InsightRepository,
+	surveyRepo repositories.SurveyRepository,
+	submissionRepo repositories.SubmissionRepository,
+	chatCompletionService IChatCompletionService,
+	jobEnqueuer JobEnqueuer,
+) *InsightService {
+	return &InsightService{
+		insightRepo:           insightRepo,
+		surveyRepo:            surveyRepo,
+		submissionRepo:        submissionRepo,
 		chatCompletionService: chatCompletionService,
-		jobSystem:             jobSystem,
+		jobEnqueuer:           jobEnqueuer,
 	}
-	mux := jobSystem.Mux
+}
+
+func (s *InsightService) RegisterHandlers(mux *asynq.ServeMux) {
 	mux.HandleFunc(TypeProcessInsight, func(ctx context.Context, task *asynq.Task) error {
 		insightID, err := parseProcessInsightPayload(task)
 		if err != nil {
 			return err
 		}
 		log.Printf("asynq: processing insight %s", insightID.Hex())
-		return insightService.ProcessInsight(insightID)
+		return s.ProcessInsight(insightID)
 	})
-	return insightService
 }
 
 func (s *InsightService) CreateInsight(ctx context.Context, req *models.CreateInsightRequest) (*models.Insight, error) {
 	// Check survey existence
-	var survey models.Survey
-	err := s.collection.Database().Collection("surveys").FindOne(ctx, bson.M{"_id": req.SurveyID}).Decode(&survey)
+	_, err := s.surveyRepo.GetByID(ctx, req.SurveyID)
 	if err != nil {
 		return nil, fmt.Errorf("survey not found")
 	}
+
 	insight := &models.Insight{
 		ID:          bson.NewObjectID(),
 		SurveyID:    req.SurveyID,
@@ -53,100 +74,49 @@ func (s *InsightService) CreateInsight(ctx context.Context, req *models.CreateIn
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
-	s.preprocessInsight(insight)
-	_, err = s.collection.InsertOne(ctx, insight)
+
+	// Preprocess (load data)
+	if err := s.preprocessInsight(ctx, insight); err != nil {
+		return nil, err
+	}
+
+	err = s.insightRepo.Create(ctx, insight)
 	if err != nil {
 		return nil, err
 	}
 
 	// Enqueue background processing.
-	if s.jobSystem != nil {
+	if s.jobEnqueuer != nil {
 		task, err := newProcessInsightTask(insight.ID)
 		if err != nil {
 			return nil, err
 		}
-		if _, err := s.jobSystem.Client.Enqueue(task, asynq.Queue("insights"), asynq.MaxRetry(10)); err != nil {
+		if _, err := s.jobEnqueuer.Enqueue(task, asynq.Queue("insights"), asynq.MaxRetry(10)); err != nil {
 			return nil, err
 		}
 	}
 
-	err = s.collection.FindOne(ctx, bson.M{"_id": insight.ID}).Decode(&insight)
-	if err != nil {
-		return nil, err
-	}
-	return insight, nil
+	return s.insightRepo.GetByID(ctx, insight.ID)
 }
 
 // Retrieve insights by using offset and limit for pagination
 func (s *InsightService) GetInsights(ctx context.Context, offset, limit int64, surveyID *string) ([]*models.Insight, error) {
-	filter := bson.M{}
-	if surveyID != nil {
-		bsonSurveyID, err := bson.ObjectIDFromHex(*surveyID)
-		if err != nil {
-			return nil, err
-		}
-		filter["survey_id"] = bsonSurveyID
-	}
-
-	opts := options.Find().
-		SetSkip(offset).
-		SetLimit(limit).
-		SetSort(bson.D{
-			{Key: "completed_at", Value: -1},
-			{Key: "updated_at", Value: -1},
-			{Key: "created_at", Value: -1},
-		})
-
-	cursor, err := s.collection.Find(ctx, filter, opts)
-	if err != nil {
-		return nil, err
-	}
-	defer cursor.Close(ctx)
-
-	var insights []*models.Insight
-	for cursor.Next(ctx) {
-		var insight models.Insight
-		if err := cursor.Decode(&insight); err != nil {
-			return nil, err
-		}
-		insights = append(insights, &insight)
-	}
-	if err := cursor.Err(); err != nil {
-		return nil, err
-	}
-	return insights, nil
+	return s.insightRepo.GetInsights(ctx, offset, limit, surveyID)
 }
 
-func (s *InsightService) preprocessInsight(insight *models.Insight) error {
+func (s *InsightService) preprocessInsight(ctx context.Context, insight *models.Insight) error {
 	// Get all submissions for the survey
-	var submissions []models.Submission
-	cursor, err := s.collection.Database().Collection("submissions").Find(context.TODO(), bson.M{"survey_id": insight.SurveyID})
+	submissions, err := s.submissionRepo.GetBySurveyID(ctx, insight.SurveyID)
 	if err != nil {
 		return err
 	}
-	defer cursor.Close(context.TODO())
-	for cursor.Next(context.TODO()) {
-		var submission models.Submission
-		if err := cursor.Decode(&submission); err != nil {
-			insight.Status = models.InsightFailed
-			s.collection.UpdateByID(context.TODO(), insight.ID, insight)
-			return err
-		}
-		submissions = append(submissions, submission)
-	}
-	if err := cursor.Err(); err != nil {
-		insight.Status = models.InsightFailed
-		s.collection.UpdateByID(context.TODO(), insight.ID, insight)
-		return err
-	}
+
 	// Get the survey
-	var survey models.Survey
-	err = s.collection.Database().Collection("surveys").FindOne(context.TODO(), bson.M{"_id": insight.SurveyID}).Decode(&survey)
+	survey, err := s.surveyRepo.GetByID(ctx, insight.SurveyID)
 	if err != nil {
-		insight.Status = models.InsightFailed
-		s.collection.UpdateByID(context.TODO(), insight.ID, insight)
 		return err
 	}
+
 	// Build map of question ID to responses
 	responseMap := make(map[bson.ObjectID][]string)
 	for _, submission := range submissions {
@@ -203,12 +173,14 @@ func (s *InsightService) preprocessInsight(insight *models.Insight) error {
 }
 
 func (s *InsightService) ProcessInsight(insightID bson.ObjectID) error {
+	ctx := context.TODO() // Background context for async task
+
 	// Retrieve the insight
-	var insight models.Insight
-	err := s.collection.FindOne(context.TODO(), bson.M{"_id": insightID}).Decode(&insight)
+	insight, err := s.insightRepo.GetByID(ctx, insightID)
 	if err != nil {
 		return err
 	}
+
 	// Update insight status
 	update := bson.M{
 		"$set": bson.M{
@@ -216,10 +188,10 @@ func (s *InsightService) ProcessInsight(insightID bson.ObjectID) error {
 			"updated_at": time.Now(),
 		},
 	}
-	_, err = s.collection.UpdateByID(context.TODO(), insight.ID, update)
-	if err != nil {
+	if err := s.insightRepo.Update(ctx, insight.ID, update); err != nil {
 		return err
 	}
+
 	for i, batch := range insight.Batches {
 		if batch.Summary != nil {
 			// Already processed
@@ -238,8 +210,7 @@ func (s *InsightService) ProcessInsight(insightID bson.ObjectID) error {
 				"updated_at": time.Now(),
 			},
 		}
-		_, err = s.collection.UpdateByID(context.TODO(), insight.ID, update)
-		if err != nil {
+		if err := s.insightRepo.Update(ctx, insight.ID, update); err != nil {
 			fmt.Println("Failed to update insight batch:", err)
 			continue
 		}
@@ -266,7 +237,7 @@ func (s *InsightService) ProcessInsight(insightID bson.ObjectID) error {
 					"error_log":    errMsg,
 				},
 			}
-			_, _ = s.collection.UpdateByID(context.TODO(), insight.ID, update)
+			_ = s.insightRepo.Update(ctx, insight.ID, update)
 			return analysisErr
 		}
 
@@ -278,8 +249,7 @@ func (s *InsightService) ProcessInsight(insightID bson.ObjectID) error {
 				"updated_at":   time.Now(),
 			},
 		}
-		_, err = s.collection.UpdateByID(context.TODO(), insight.ID, finalUpdate)
-		if err != nil {
+		if err := s.insightRepo.Update(ctx, insight.ID, finalUpdate); err != nil {
 			return err
 		}
 	}
@@ -298,25 +268,23 @@ func (s *InsightService) processInsightBatch(insightID bson.ObjectID, contextTyp
 		payload = fmt.Sprintf("Aggregated answers: %s", string(payloadBytes))
 	case "LIKERT":
 		payloadBytes, _ := json.Marshal(batch.AggregatedAnswer)
-		payload = fmt.Sprintf("Likert scale distribution: %s", string(payloadBytes))
-	default:
-		payload = "No valid answers provided."
+		payload = fmt.Sprintf("Aggregated answers: %s", string(payloadBytes))
 	}
 
 	reqBody := models.ChatCompletionRequest{
 		Messages: []models.ChatCompletionMessage{
 			{
 				Role:    "system",
-				Content: fmt.Sprintf("You are a helpful assistant. Analyze survey responses in the context of %s.", contextType),
+				Content: fmt.Sprintf("You are a helpful assistant. Summarize the following survey responses in the context of %s.", contextType),
 			},
 			{
 				Role:    "user",
-				Content: fmt.Sprintf("Batch %d:\nQuestion: %s\n%s\n\nPlease generate a concise summary.", batch.BatchNumber, batch.Question.Text, payload),
+				Content: payload,
 			},
 		},
-		Temperature: 0.7,
+		Temperature: 0.5,
 		TopP:        1.0,
-		MaxTokens:   500,
+		MaxTokens:   800,
 		Model:       "openai/gpt-4o-mini",
 	}
 
@@ -328,23 +296,11 @@ func (s *InsightService) processInsightBatch(insightID bson.ObjectID, contextTyp
 	return resp, nil
 }
 
-func (s *InsightService) generateMetaSummary(insight models.Insight) (*string, error) {
-	meta := "Create an overall analysis across all questions.\n"
-	meta += "Provide:\n"
-	meta += "- key themes\n- strongest signals\n- notable outliers\n- actionable recommendations\n"
-	meta += "\nBatches:\n"
-
+func (s *InsightService) generateMetaSummary(insight *models.Insight) (string, error) {
+	meta := "Here are the summaries of different batches of answers:\n"
 	for _, batch := range insight.Batches {
-		meta += fmt.Sprintf("\nBatch %d\nQuestion: %s\nType: %s\n", batch.BatchNumber, batch.Question.Text, batch.Question.Type)
 		if batch.Summary != nil {
-			meta += fmt.Sprintf("Summary: %s\n", *batch.Summary)
-		}
-		if batch.AggregatedAnswer != nil && len(*batch.AggregatedAnswer) > 0 {
-			payloadBytes, _ := json.Marshal(batch.AggregatedAnswer)
-			meta += fmt.Sprintf("Aggregated: %s\n", string(payloadBytes))
-		}
-		if batch.TextualAnswers != nil && len(*batch.TextualAnswers) > 0 {
-			meta += fmt.Sprintf("Text answers count: %d\n", len(*batch.TextualAnswers))
+			meta += fmt.Sprintf("Batch %d (Question: %s): %s\n", batch.BatchNumber, batch.Question.Text, *batch.Summary)
 		}
 		if batch.ErrorLog != nil {
 			meta += fmt.Sprintf("Error: %s\n", *batch.ErrorLog)
@@ -371,9 +327,12 @@ func (s *InsightService) generateMetaSummary(insight models.Insight) (*string, e
 	ref := fmt.Sprintf("insight:%s meta", insight.ID.Hex())
 	resp, err := s.chatCompletionService.NewRequest(reqBody, &ref)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	return resp, nil
+	if resp == nil {
+		return "", fmt.Errorf("empty response")
+	}
+	return *resp, nil
 }
 
 // Asynq task definitions

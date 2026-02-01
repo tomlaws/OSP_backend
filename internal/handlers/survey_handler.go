@@ -9,10 +9,10 @@ import (
 )
 
 type SurveyHandler struct {
-	surveyService *services.SurveyService
+	surveyService services.ISurveyService
 }
 
-func NewSurveyHandler(surveyService *services.SurveyService) *SurveyHandler {
+func NewSurveyHandler(surveyService services.ISurveyService) *SurveyHandler {
 	return &SurveyHandler{
 		surveyService: surveyService,
 	}
