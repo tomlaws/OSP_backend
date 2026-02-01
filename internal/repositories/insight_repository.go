@@ -50,9 +50,8 @@ func (r *MongoInsightRepository) GetInsights(ctx context.Context, offset, limit 
 		SetSkip(offset).
 		SetLimit(limit).
 		SetSort(bson.D{
-			{Key: "completed_at", Value: -1},
-			{Key: "updated_at", Value: -1},
 			{Key: "created_at", Value: -1},
+			{Key: "completed_at", Value: -1},
 		})
 
 	cursor, err := r.collection.Find(ctx, filter, opts)
