@@ -8,6 +8,7 @@ import (
 	"osp/internal/models"
 	"time"
 
+	"github.com/hibiken/asynq"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -16,63 +17,25 @@ import (
 type InsightService struct {
 	collection            *mongo.Collection
 	chatCompletionService *ChatCompletionService
+	jobSystem             *models.JobSystem
 }
 
-func NewInsightService(collection *mongo.Collection, chatCompletionService *ChatCompletionService) *InsightService {
+func NewInsightService(collection *mongo.Collection, chatCompletionService *ChatCompletionService, jobSystem *models.JobSystem) *InsightService {
 	insightService := &InsightService{
 		collection:            collection,
 		chatCompletionService: chatCompletionService,
+		jobSystem:             jobSystem,
 	}
-	go insightService.startInsightProcessingWorker()
-	return insightService
-}
-
-func (s *InsightService) startInsightProcessingWorker() {
-	// Mark all PENDING insights as FAILED from previous runs
-	_, err := s.collection.UpdateMany(
-		context.TODO(),
-		bson.M{"status": models.InsightPending},
-		bson.M{"$set": bson.M{"status": models.InsightFailed}},
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-	ctx := context.Background()
-	pipeline := mongo.Pipeline{
-		{
-			{
-				Key: "$match",
-				Value: bson.D{
-					{Key: "operationType", Value: "insert"},
-					{Key: "fullDocument.status", Value: "PENDING"},
-				},
-			},
-		}}
-	stream, err := s.collection.Watch(ctx, pipeline)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer stream.Close(ctx)
-	fmt.Println("Started insight processing watcher...")
-	for stream.Next(ctx) {
-		var event bson.M
-		if err := stream.Decode(&event); err != nil {
-			panic(err)
-		}
-		output, err := json.MarshalIndent(event["fullDocument"], "", "    ")
+	mux := jobSystem.Mux
+	mux.HandleFunc(TypeProcessInsight, func(ctx context.Context, task *asynq.Task) error {
+		insightID, err := parseProcessInsightPayload(task)
 		if err != nil {
-			panic(err)
+			return err
 		}
-		fmt.Printf("%s\n", output)
-		var insight models.Insight
-		bsonBytes, _ := bson.Marshal(event["fullDocument"])
-		bson.Unmarshal(bsonBytes, &insight)
-		fmt.Printf("Processing insight ID: %s\n", insight.ID.Hex())
-		err = s.ProcessInsight(insight)
-	}
-	if err := stream.Err(); err != nil {
-		log.Fatal(err)
-	}
+		log.Printf("asynq: processing insight %s", insightID.Hex())
+		return insightService.ProcessInsight(insightID)
+	})
+	return insightService
 }
 
 func (s *InsightService) CreateInsight(ctx context.Context, req *models.CreateInsightRequest) (*models.Insight, error) {
@@ -89,6 +52,18 @@ func (s *InsightService) CreateInsight(ctx context.Context, req *models.CreateIn
 	if err != nil {
 		return nil, err
 	}
+
+	// Enqueue background processing.
+	if s.jobSystem != nil {
+		task, err := newProcessInsightTask(insight.ID)
+		if err != nil {
+			return nil, err
+		}
+		if _, err := s.jobSystem.Client.Enqueue(task, asynq.Queue("insights"), asynq.MaxRetry(10)); err != nil {
+			return nil, err
+		}
+	}
+
 	err = s.collection.FindOne(ctx, bson.M{"_id": insight.ID}).Decode(&insight)
 	if err != nil {
 		return nil, err
@@ -214,7 +189,13 @@ func (s *InsightService) preprocessInsight(insight *models.Insight) error {
 	return nil
 }
 
-func (s *InsightService) ProcessInsight(insight models.Insight) error {
+func (s *InsightService) ProcessInsight(insightID bson.ObjectID) error {
+	// Retrieve the insight
+	var insight models.Insight
+	err := s.collection.FindOne(context.TODO(), bson.M{"_id": insightID}).Decode(&insight)
+	if err != nil {
+		return err
+	}
 	// Update insight status
 	update := bson.M{
 		"$set": bson.M{
@@ -222,7 +203,7 @@ func (s *InsightService) ProcessInsight(insight models.Insight) error {
 			"updated_at": time.Now(),
 		},
 	}
-	_, err := s.collection.UpdateByID(context.TODO(), insight.ID, update)
+	_, err = s.collection.UpdateByID(context.TODO(), insight.ID, update)
 	if err != nil {
 		return err
 	}
@@ -380,4 +361,30 @@ func (s *InsightService) generateMetaSummary(insight models.Insight) (*string, e
 		return nil, err
 	}
 	return resp, nil
+}
+
+// Asynq task definitions
+const TypeProcessInsight = "insight:process"
+
+type ProcessInsightPayload struct {
+	InsightID string `json:"insight_id"`
+}
+
+func newProcessInsightTask(insightID bson.ObjectID) (*asynq.Task, error) {
+	payload, err := json.Marshal(ProcessInsightPayload{InsightID: insightID.Hex()})
+	if err != nil {
+		return nil, err
+	}
+	return asynq.NewTask(TypeProcessInsight, payload), nil
+}
+
+func parseProcessInsightPayload(task *asynq.Task) (bson.ObjectID, error) {
+	var payload ProcessInsightPayload
+	if err := json.Unmarshal(task.Payload(), &payload); err != nil {
+		return bson.ObjectID{}, err
+	}
+	if payload.InsightID == "" {
+		return bson.ObjectID{}, fmt.Errorf("missing insight_id")
+	}
+	return bson.ObjectIDFromHex(payload.InsightID)
 }
