@@ -105,6 +105,132 @@ Sample response:
 
 ---
 
+### Surveys
+
+#### Get Survey (Public)
+
+Retrieve a survey by its public token.
+
+- **GET** `/api/surveys/:token`
+- Bruno: [.bruno/Get Survey.bru](.bruno/Get%20Survey.bru)
+
+#### Create Survey (Admin)
+
+Create a new survey with questions.
+
+- **POST** `/api/admin/surveys`
+- Bruno: [.bruno/Admin/Create Survey.bru](.bruno/Admin/Create%20Survey.bru)
+
+Request Body Example:
+
+```json
+{
+  "name": "Product Satisfaction Survey",
+  "questions": [
+    {
+      "type": "TEXTBOX",
+      "text": "What do you like most about our product?",
+      "specification": {
+        "max_length": 250
+      }
+    },
+    {
+      "type": "MULTIPLE_CHOICE",
+      "text": "Which feature do you use most often?",
+      "specification": {
+        "options": [
+          "Ease of use",
+          "Price",
+          "Customer support"
+        ]
+      }
+    }
+  ]
+}
+```
+
+#### List Surveys (Admin)
+
+List all surveys.
+
+- **GET** `/api/admin/surveys`
+- Bruno: [.bruno/Admin/List Surveys.bru](.bruno/Admin/List%20Surveys.bru)
+
+#### Delete Survey (Admin)
+
+- **DELETE** `/api/admin/surveys/:id`
+
+---
+
+### Submissions
+
+#### Submit Survey (Public)
+
+Submit responses for a survey.
+
+- **POST** `/api/submissions`
+- Bruno: [.bruno/Submit Survey.bru](.bruno/Submit%20Survey.bru)
+
+Request Body Example:
+
+```json
+{
+  "survey_token": "SURVEY_TOKEN",
+  "responses": [
+    {
+      "question_id": "QUESTION_ID",
+      "answer": "My detailed answer"
+    }
+  ]
+}
+```
+
+#### List Submissions (Admin)
+
+List submissions.
+
+- **GET** `/api/admin/submissions`
+- Bruno: [.bruno/Admin/Get Submissions.bru](.bruno/Admin/Get%20Submissions.bru)
+
+#### Delete Submission (Admin)
+
+- **DELETE** `/api/admin/submissions/:id`
+
+---
+
+### Insights
+
+#### Create Insight (Admin)
+
+Trigger AI insight generation for a survey.
+
+- **POST** `/api/admin/insights`
+- Bruno: [.bruno/Admin/Create Insight.bru](.bruno/Admin/Create%20Insight.bru)
+
+Request Body Example:
+
+```json
+{
+  "survey_id": "SURVEY_ID",
+  "context_type": "PRODUCT_SATISFACTION"
+}
+```
+
+#### List Insights (Admin)
+
+- **GET** `/api/admin/insights`
+- Bruno: [.bruno/Admin/Get Insights.bru](.bruno/Admin/Get%20Insights.bru)
+
+#### Get Insight (Admin)
+
+Retrieve a specific insight result.
+
+- **GET** `/api/admin/insights/:id`
+- Bruno: [.bruno/Admin/Get Insight.bru](.bruno/Admin/Get%20Insight.bru)
+
+---
+
+
 
 ## AI Integration Details
 
