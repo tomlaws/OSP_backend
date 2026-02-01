@@ -1,0 +1,24 @@
+meta {
+  name: Get Insight
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{BASE_URL}}/api/admin/insights?surveyId=697ec2067cd24f1b1553146e
+  body: json
+  auth: bearer
+}
+
+params:query {
+  surveyId: 697ec2067cd24f1b1553146e
+}
+
+auth:bearer {
+  token: {{ROOT_TOKEN}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

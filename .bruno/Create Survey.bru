@@ -1,0 +1,73 @@
+meta {
+  name: Create Survey
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{BASE_URL}}/api/surveys
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Product Satisfaction Survey",
+    "questions": [
+      {
+        "type": "TEXTBOX",
+        "text": "What do you like most about our product?",
+        "specification": {
+          "max_length": 250
+        }
+      },
+      {
+        "type": "MULTIPLE_CHOICE",
+        "text": "Which feature do you use most often?",
+        "specification": {
+          "options": [
+            "Ease of use",
+            "Price",
+            "Customer support",
+            "Design",
+            "Performance"
+          ]
+        }
+      },
+      {
+        "type": "LIKERT",
+        "text": "How satisfied are you with the product overall?",
+        "specification": {
+          "min": 1,
+          "max": 5,
+          "minLabel": "Very dissatisfied",
+          "maxLabel": "Very satisfied"
+        }
+      },
+      {
+        "type": "MULTIPLE_CHOICE",
+        "text": "Would you recommend our product to others?",
+        "specification": {
+          "options": [
+            "Yes, definitely",
+            "Maybe",
+            "No"
+          ]
+        }
+      },
+      {
+        "type": "TEXTBOX",
+        "text": "What improvements would you like to see?",
+        "specification": {
+          "max_length": 250
+        }
+      }
+    ]
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

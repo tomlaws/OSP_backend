@@ -1,0 +1,27 @@
+meta {
+  name: Create Insight
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{BASE_URL}}/api/admin/insights
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{ROOT_TOKEN}}
+}
+
+body:json {
+  {
+    "survey_id": "697ec2067cd24f1b1553146e",
+    "context_type": "PRODUCT_SATISFACTION"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

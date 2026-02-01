@@ -1,0 +1,36 @@
+meta {
+  name: GitHub Models Chat
+  type: http
+  seq: 9
+}
+
+post {
+  url: https://models.github.ai/inference/chat/completions
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{GITHUB_TOKEN}}
+}
+
+body:json {
+  {
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a survey summarizer."
+      },
+      {
+        "role": "user",
+        "content": "What is the capital of France?"
+      }
+    ],
+    "model": "openai/gpt-4o-mini"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

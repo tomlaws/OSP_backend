@@ -1,0 +1,20 @@
+meta {
+  name: Get Insights
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{BASE_URL}}/api/admin/insights
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{ROOT_TOKEN}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

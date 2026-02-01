@@ -1,0 +1,45 @@
+meta {
+  name: Submit Survey
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{BASE_URL}}/api/submissions
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "survey_token": "YUNvS",
+    "responses": [
+      {
+        "question_id": "697ec2067cd24f1b1553146f",
+        "answer": "Attractive design"
+      },
+      {
+        "question_id": "697ec2067cd24f1b15531470",
+        "answer": "Design"
+      },
+      {
+        "question_id": "697ec2067cd24f1b15531471",
+        "answer": "5"
+      },
+      {
+        "question_id": "697ec2067cd24f1b15531472",
+        "answer": "Yes, definitely"
+      },
+      {
+        "question_id": "697ec2067cd24f1b15531473",
+        "answer": "Faster customer support response"
+      }
+    ]
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
