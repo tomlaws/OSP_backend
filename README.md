@@ -13,6 +13,7 @@
 - **Golang** - Backend programming language
 - **Gin** - HTTP web framework
 - **MongoDB** - NoSQL database
+- **Redis + Asynq** - Background job processing
 - **GitHub Models API** - AI integration
 
 ## API Documentation
