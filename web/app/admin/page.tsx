@@ -20,7 +20,6 @@ function AdminDashboardContent() {
   
   const page = Number(searchParams.get('page')) || 1;
   const [surveys, setSurveys] = useState<Survey[]>([]);
-  const [insights, setInsights] = useState<Insight[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const pageSize = 5;
@@ -39,19 +38,14 @@ function AdminDashboardContent() {
     setLoading(true);
     try {
       const offset = (page - 1) * pageSize;
-      const [surveysRes, insightsRes] = await Promise.all([
+      const [surveysRes] = await Promise.all([
         fetch(`/next-api/admin/surveys?offset=${offset}&limit=${pageSize}`),
-        fetch('/next-api/admin/insights'),
       ]);
 
       if (surveysRes.ok) {
         const data = await surveysRes.json();
         setSurveys(data.data || []);
         setTotal(data.total || 0);
-      }
-      if (insightsRes.ok) {
-        const data = await insightsRes.json();
-        setInsights(data.data || []);
       }
     } catch (error) {
       console.error('Failed to fetch data', error);
@@ -93,7 +87,6 @@ function AdminDashboardContent() {
       <div className="border-t-2 border-black">
         <ul className="divide-y-2 divide-black">
           {surveys.map((survey) => {
-            const insight = insights.find(i => i.survey_id === survey.id);
             const shareUrl = `${window.location.origin}/survey/${survey.token}`;
 
             return (
@@ -125,18 +118,12 @@ function AdminDashboardContent() {
                         View Submissions
                       </Link>
                       
-                      {insight ? (
-                        <Link href={`/admin/insights/${insight.id}`} className="text-black hover:text-[#D80000] hover:underline underline-offset-4">
-                          Insights <span className="text-[#D80000]">({insight.status})</span>
-                        </Link>
-                      ) : (
-                        <Link 
-                          href={`/admin/surveys/${survey.id}/generate-insight`}
-                          className="text-black hover:text-[#D80000] hover:underline underline-offset-4"
-                        >
-                          Generate Insight
-                        </Link>
-                      )}
+                      <Link 
+                        href={`/admin/insights?surveyId=${survey.id}`}
+                        className="text-black hover:text-[#D80000] hover:underline underline-offset-4"
+                      >
+                        Insights
+                      </Link>
 
                       <button 
                         onClick={() => handleDeleteSurvey(survey.id)}

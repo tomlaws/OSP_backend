@@ -33,9 +33,15 @@ export default function InsightDetails({ params }: { params: Promise<{ id: strin
             Status: {insight.status} | Context: {insight.context_type}
           </p>
         </div>
-         <Link href="/admin" className="text-indigo-600 hover:text-indigo-900">
-            Back to Dashboard
-        </Link>
+        <div className="flex space-x-4">
+            <button 
+                type="button"
+                onClick={() => router.back()}
+                className="inline-flex items-center px-4 py-2 border-2 border-black text-sm font-bold uppercase text-black bg-white hover:bg-gray-100 transition-colors"
+            >
+                Back
+            </button>
+        </div>
       </div>
       <div className="border-t border-gray-200 px-4 py-5 sm:p-0">
         <dl className="sm:divide-y sm:divide-gray-200">

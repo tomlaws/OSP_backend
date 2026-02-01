@@ -3,8 +3,10 @@
 import { useEffect, useState, use } from 'react';
 import { Survey, Submission } from '@/types';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function SurveySubmissions({ params }: { params: Promise<{ id: string }> }) {
+  const router = useRouter();
   const { id } = use(params);
   const [survey, setSurvey] = useState<Survey | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -47,9 +49,13 @@ export default function SurveySubmissions({ params }: { params: Promise<{ id: st
             Total Submissions: {submissions.length}
           </p>
         </div>
-        <Link href="/admin" className="text-indigo-600 hover:text-indigo-900">
-            Back to Dashboard
-        </Link>
+        <button 
+            type="button"
+            onClick={() => router.back()}
+            className="inline-flex items-center px-4 py-2 border-2 border-black text-sm font-bold uppercase text-black bg-white hover:bg-gray-100 transition-colors"
+        >
+            Back
+        </button>
       </div>
       <div className="flex flex-col">
           <div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">

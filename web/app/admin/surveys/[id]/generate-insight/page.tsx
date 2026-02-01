@@ -45,7 +45,6 @@ export default function GenerateInsightPage({ params }: { params: Promise<{ id: 
       });
 
       if (res.ok) {
-        alert('Insight generation started!');
         router.push('/admin');
       } else {
         const errorData = await res.json();

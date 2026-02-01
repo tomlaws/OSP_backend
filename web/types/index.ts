@@ -61,6 +61,7 @@ export interface Insight {
   batches: InsightBatch[];
   created_at: string;
   updated_at: string;
+  completed_at?: string;
 }
 
 export interface CreateInsightRequest {
