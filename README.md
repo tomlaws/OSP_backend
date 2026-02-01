@@ -4,9 +4,11 @@
 
 - [Introduction](#introduction)
 - [Tech Stack](#tech-stack)
+- [How to run](#how-to-run)
 - [API Documentation](#api-documentation)
 
 ## Introduction
+OSP Backend is the backend service for the OSP (Open Survey Platform) application. It provides RESTful APIs for managing surveys, collecting submissions, and generating insights using AI.
 
 ## Tech Stack
 
@@ -15,6 +17,52 @@
 - **MongoDB** - NoSQL database
 - **Redis + Asynq** - Background job processing
 - **GitHub Models API** - AI integration
+
+## How to run
+
+### 1) Configure environment variables
+
+Create a `.env` file in the project root (same folder as `go.mod`) and set:
+
+```env
+PORT=8080
+
+# Admin Bearer token for /api/admin/* endpoints
+ROOT_TOKEN=change-me
+
+# MongoDB
+MONGODB_URI=mongodb://localhost:27017
+
+# Redis (required by Asynq job system)
+REDIS_URI=localhost:6379
+
+# Required for insights generation via GitHub Models API
+GITHUB_TOKEN=your_github_token
+```
+
+Notes:
+
+- If `ROOT_TOKEN` is empty, admin endpoints will return `401 Unauthorized`.
+- `GITHUB_TOKEN` is only needed for accessing the GitHub Models API for insights generation.
+
+### 2) Start dependencies
+
+- Start MongoDB (local or hosted)
+- Start Redis (for Asynq)
+
+### 3) Run the server
+
+From the repo root:
+
+```bash
+go run ./cmd/server
+```
+
+Then verify:
+
+```text
+GET http://localhost:8080/health
+```
 
 ## API Documentation
 
@@ -71,7 +119,7 @@ Sample request:
 	"name": "Product Satisfaction Survey",
 	"questions": [
 		{
-			"type": "TEXTBOX",
+			"type": "TEXTBOX", // Possible values: TEXTBOX, MULTIPLE_CHOICE, LIKERT
 			"text": "What do you like most about our product?",
 			"specification": { "max_length": 250 }
 		},
