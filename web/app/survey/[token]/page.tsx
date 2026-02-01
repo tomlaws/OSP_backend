@@ -2,10 +2,8 @@ import { Survey } from '@/types';
 import SurveyForm from './form';
 
 async function getSurvey(token: string): Promise<Survey | null> {
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
   try {
-    console.log(`${backendUrl}/surveys/${token}`)
-    const res = await fetch(`${backendUrl}/surveys/${token}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/surveys/${token}`, {
       cache: 'no-store', // Always fetch fresh
     });
     if (!res.ok) {

@@ -25,7 +25,6 @@ export default function SurveyForm({ survey }: { survey: Survey }) {
     };
 
     try {
-      console.log(`${process.env.NEXT_PUBLIC_BACKEND_URL}/submissions`)
       const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/submissions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
