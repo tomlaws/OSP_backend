@@ -224,7 +224,7 @@ Sample request:
 ```json
 {
 	"survey_id": "697ec2067cd24f1b1553146e",
-	"context_type": "PRODUCT_SATISFACTION"
+	"context_type": "PRODUCT_SATISFACTION" // Possible values: PRODUCT_SATISFACTION, COURSE_FEEDBACK, EMPLOYEE_ENGAGEMENT, CUSTOMER_EXPERIENCE
 }
 ```
 
@@ -280,3 +280,36 @@ Sample response:
 Notes:
 
 - Results are sorted by `completed_at` descending.
+
+## AI Integration Details
+
+This project leverages Artificial Intelligence to generate actionable insights from survey responses.
+
+### Architecture
+
+1.  **Ingestion**: Survey submissions are collected via the API.
+2.	**Batching**: Responses are grouped into batches to fit within context windows.
+3.  **Queueing**: When an Insight is requested, a background job is enqueued using `asynq` (Redis).
+4.  **Processing**:
+    -   **Summarization**: Each batch is sent to the LLM for summarization.
+    -   **Meta-Analysis**: All batch summaries are combined and sent for a final high-level analysis.
+5.  **Storage**: Results are stored in MongoDB.
+
+### Providers & Models
+
+*   **Provider**: [GitHub Models](https://github.com/marketplace/models)
+*   **Model**: `openai/gpt-4o-mini`
+*   **Authentication**: Requires a valid `GITHUB_TOKEN` in the environment variables.
+
+### Key Capabilities
+
+*   **Context Awareness**: The AI is prompted with specific contexts (e.g., Course Feedback, Employee Engagement) to tailor the analysis.
+*   **Scalability**: The batching system ensures that large numbers of responses can be processed without hitting token limits.
+
+## AI Usage Acknowledgment
+
+This project utilizes Artificial Intelligence assistance, primarily for:
+
+*   **Code Quality Enhancement**: Refactoring and optimizing code structure.
+*   **Testing**: Generating comprehensive unit tests and increasing coverage.
+*   **Documentation**: Drafting and refining documentation, including this README.
