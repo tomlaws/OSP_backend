@@ -5,6 +5,7 @@ import (
 	"osp/internal/handlers"
 	"osp/internal/middleware"
 	"osp/internal/models"
+	"osp/internal/repositories"
 	"osp/internal/services"
 
 	"github.com/gin-gonic/gin"
@@ -39,11 +40,16 @@ func setupAPIRoutes(api *gin.RouterGroup, cfg *config.Config, client *mongo.Clie
 	submissionsCollection := db.Collection("submissions")
 
 	// Initialize services and handlers
-	surveyService := services.NewSurveyService(surveysCollection)
+	surveyRepo := repositories.NewMongoSurveyRepository(surveysCollection)
+	submissionRepo := repositories.NewMongoSubmissionRepository(submissionsCollection)
+	insightRepo := repositories.NewMongoInsightRepository(insightsCollection)
+
+	surveyService := services.NewSurveyService(surveyRepo)
 	surveyHandler := handlers.NewSurveyHandler(surveyService)
 
 	chatCompletionService := services.NewChatCompletionService(db.Collection("chat_completion_logs"))
-	insightService := services.NewInsightService(insightsCollection, chatCompletionService, jobSystem)
+	insightService := services.NewInsightService(insightRepo, surveyRepo, submissionRepo, chatCompletionService, jobSystem.Client)
+	insightService.RegisterHandlers(jobSystem.Mux)
 	insightHandler := handlers.NewInsightHandler(insightService)
 	// Surveys routes
 	surveys := api.Group("/surveys")
@@ -52,7 +58,7 @@ func setupAPIRoutes(api *gin.RouterGroup, cfg *config.Config, client *mongo.Clie
 		surveys.GET("/:token", surveyHandler.GetSurvey)
 	}
 	// Submissions routes
-	submissionService := services.NewSubmissionService(submissionsCollection)
+	submissionService := services.NewSubmissionService(submissionRepo, surveyRepo)
 	submissionHandler := handlers.NewSubmissionHandler(submissionService)
 	submissions := api.Group("/submissions")
 	{

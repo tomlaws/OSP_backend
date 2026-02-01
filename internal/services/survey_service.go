@@ -2,23 +2,28 @@ package services
 
 import (
 	"context"
+	"math/rand"
 	"osp/internal/models"
+	"osp/internal/repositories"
+	"strings"
 	"time"
 
-	"math/rand"
-	"strings"
-
 	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-type SurveyService struct {
-	collection *mongo.Collection
+// ISurveyService defines the business logic for survey operations
+type ISurveyService interface {
+	CreateSurvey(ctx context.Context, req *models.CreateSurveyRequest) (*models.Survey, error)
+	GetSurveyByToken(ctx context.Context, token string) (*models.Survey, error)
 }
 
-func NewSurveyService(collection *mongo.Collection) *SurveyService {
+type SurveyService struct {
+	repo repositories.SurveyRepository
+}
+
+func NewSurveyService(repo repositories.SurveyRepository) *SurveyService {
 	return &SurveyService{
-		collection: collection,
+		repo: repo,
 	}
 }
 
@@ -40,7 +45,7 @@ func (s *SurveyService) CreateSurvey(ctx context.Context, req *models.CreateSurv
 		}
 	}
 
-	_, err := s.collection.InsertOne(ctx, survey)
+	err := s.repo.Create(ctx, survey)
 	if err != nil {
 		return nil, err
 	}
@@ -57,11 +62,6 @@ func generateRandomToken(i int) string {
 	return sb.String()
 }
 
-func (s *SurveyService) GetSurveyByToken(context context.Context, token string) (any, any) {
-	var survey models.Survey
-	err := s.collection.FindOne(context, bson.M{"token": token}).Decode(&survey)
-	if err != nil {
-		return nil, err
-	}
-	return &survey, nil
+func (s *SurveyService) GetSurveyByToken(ctx context.Context, token string) (*models.Survey, error) {
+	return s.repo.GetByToken(ctx, token)
 }

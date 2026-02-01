@@ -10,10 +10,10 @@ import (
 )
 
 type InsightHandler struct {
-	insightService *services.InsightService
+	insightService services.IInsightService
 }
 
-func NewInsightHandler(insightService *services.InsightService) *InsightHandler {
+func NewInsightHandler(insightService services.IInsightService) *InsightHandler {
 	return &InsightHandler{
 		insightService: insightService,
 	}

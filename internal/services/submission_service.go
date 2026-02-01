@@ -5,25 +5,30 @@ import (
 	"errors"
 	"fmt"
 	"osp/internal/models"
+	"osp/internal/repositories"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-type SubmissionService struct {
-	collection *mongo.Collection
+type ISubmissionService interface {
+	CreateSubmission(ctx context.Context, req *models.CreateSubmissionRequest) (*models.Submission, error)
 }
 
-func NewSubmissionService(collection *mongo.Collection) *SubmissionService {
+type SubmissionService struct {
+	submissionRepo repositories.SubmissionRepository
+	surveyRepo     repositories.SurveyRepository
+}
+
+func NewSubmissionService(submissionRepo repositories.SubmissionRepository, surveyRepo repositories.SurveyRepository) *SubmissionService {
 	return &SubmissionService{
-		collection: collection,
+		submissionRepo: submissionRepo,
+		surveyRepo:     surveyRepo,
 	}
 }
 
 func (s *SubmissionService) CreateSubmission(ctx context.Context, req *models.CreateSubmissionRequest) (*models.Submission, error) {
-	var survey models.Survey
-	err := s.collection.Database().Collection("surveys").FindOne(ctx, bson.M{"token": req.SurveyToken}).Decode(&survey)
+	survey, err := s.surveyRepo.GetByToken(ctx, req.SurveyToken)
 	if err != nil {
 		return nil, errors.New("Survey not found")
 	}
@@ -89,7 +94,7 @@ func (s *SubmissionService) CreateSubmission(ctx context.Context, req *models.Cr
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-	_, err = s.collection.InsertOne(ctx, submission)
+	err = s.submissionRepo.Create(ctx, submission)
 	if err != nil {
 		return nil, err
 	}
