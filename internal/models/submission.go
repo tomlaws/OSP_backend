@@ -32,7 +32,7 @@ type CreateSubmissionResponse struct {
 }
 
 type GetSubmissionsRequest struct {
-	SurveyID *string `uri:"surveyID"`
+	SurveyID *string `form:"surveyId"`
 	Offset   int64   `form:"offset,default=0"`
 	Limit    int64   `form:"limit,default=10"`
 }
