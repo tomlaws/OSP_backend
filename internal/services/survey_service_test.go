@@ -22,12 +22,12 @@ func (m *MockSurveyRepository) Create(ctx context.Context, survey *models.Survey
 	return args.Error(0)
 }
 
-func (m *MockSurveyRepository) List(ctx context.Context, offset, limit int64) ([]*models.Survey, error) {
+func (m *MockSurveyRepository) List(ctx context.Context, offset, limit int64) ([]*models.Survey, int64, error) {
 	args := m.Called(ctx, offset, limit)
 	if args.Get(0) == nil {
-		return nil, args.Error(1)
+		return nil, 0, args.Error(2)
 	}
-	return args.Get(0).([]*models.Survey), args.Error(1)
+	return args.Get(0).([]*models.Survey), args.Get(1).(int64), args.Error(2)
 }
 
 func (m *MockSurveyRepository) GetByToken(ctx context.Context, token string) (*models.Survey, error) {
@@ -132,11 +132,12 @@ func TestService_ListSurveys(t *testing.T) {
 			{ID: bson.NewObjectID()},
 			{ID: bson.NewObjectID()},
 		}
-		mockRepo.On("List", mock.Anything, int64(0), int64(10)).Return(expectedSurveys, nil)
+		mockRepo.On("List", mock.Anything, int64(0), int64(10)).Return(expectedSurveys, int64(2), nil)
 
-		surveys, err := service.ListSurveys(context.Background(), 0, 10)
+		surveys, count, err := service.ListSurveys(context.Background(), 0, 10)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedSurveys, surveys)
+		assert.Equal(t, int64(2), count)
 	})
 }
 

@@ -76,6 +76,7 @@ type ListSurveysRequest struct {
 
 type ListSurveysResponse struct {
 	Data  []*Survey `json:"data"`
+	Total int64     `json:"total"`
 	Error string    `json:"error,omitempty"`
 }
 
