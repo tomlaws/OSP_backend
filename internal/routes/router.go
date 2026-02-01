@@ -58,10 +58,14 @@ func setupAPIRoutes(api *gin.RouterGroup, cfg *config.Config, client *mongo.Clie
 	{
 		submissions.POST("", submissionHandler.CreateSubmission)
 	}
-	// Insights routes
-	insights := api.Group("/admin/insights")
+	// Admin routes (secured)
+	admin := api.Group("/admin")
+	admin.Use(middleware.AdminBearerAuth(cfg.RootToken))
 	{
-		insights.POST("", insightHandler.CreateInsight)
-		insights.GET("", insightHandler.GetInsights)
+		insights := admin.Group("/insights")
+		{
+			insights.POST("", insightHandler.CreateInsight)
+			insights.GET("", insightHandler.GetInsights)
+		}
 	}
 }

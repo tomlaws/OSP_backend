@@ -8,6 +8,7 @@ import (
 
 type Config struct {
 	Port        string
+	RootToken   string
 	DBUri       string
 	RedisUri    string
 	GitHubToken string
@@ -19,6 +20,7 @@ func LoadConfig() (*Config, error) {
 
 	return &Config{
 		Port:        os.Getenv("PORT"),
+		RootToken:   os.Getenv("ROOT_TOKEN"),
 		DBUri:       os.Getenv("MONGODB_URI"),
 		RedisUri:    os.Getenv("REDIS_URI"),
 		GitHubToken: os.Getenv("GITHUB_TOKEN"),
