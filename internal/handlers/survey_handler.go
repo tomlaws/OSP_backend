@@ -118,7 +118,9 @@ func (h *SurveyHandler) GetSurvey(c *gin.Context) {
 		})
 		return
 	}
-	c.JSON(http.StatusOK, survey)
+	c.JSON(http.StatusOK, &models.GetSurveyResponse{
+		Data: survey,
+	})
 }
 
 func (h *SurveyHandler) DeleteSurvey(c *gin.Context) {
