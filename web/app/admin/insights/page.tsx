@@ -108,15 +108,15 @@ function SurveyInsightsContent() {
                 <div className="mt-4 flex md:mt-0 md:ml-12 self-end space-x-4">
                      <Link
                         href="/admin"
-                        className="inline-flex items-center px-4 py-2 border-2 border-black text-sm font-bold uppercase text-black bg-white hover:bg-gray-100 transition-colors"
+                        className="inline-flex items-center cursor-pointer px-4 py-2 border-2 border-black text-sm font-bold uppercase text-black bg-white hover:bg-gray-100 transition-colors"
                     >
                         Back
                     </Link>
                     <button
                         onClick={() => setShowGenerateModal(true)}
-                        className="inline-flex items-center px-4 py-2 border-2 border-black text-sm font-bold uppercase text-white bg-black hover:bg-[#D80000] hover:border-[#D80000] transition-colors"
+                        className="inline-flex items-center cursor-pointer px-4 py-2 border-2 border-black text-sm font-bold uppercase text-white bg-black hover:bg-[#D80000] hover:border-[#D80000] transition-colors"
                     >
-                        + Generate Analysis
+                        + Generate Insight
                     </button>
                 </div>
             </div>

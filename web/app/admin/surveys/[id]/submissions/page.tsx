@@ -52,7 +52,7 @@ export default function SurveySubmissions({ params }: { params: Promise<{ id: st
         <button 
             type="button"
             onClick={() => router.back()}
-            className="inline-flex items-center px-4 py-2 border-2 border-black text-sm font-bold uppercase text-black bg-white hover:bg-gray-100 transition-colors"
+            className="inline-flex items-center cursor-pointer px-4 py-2 border-2 border-black text-sm font-bold uppercase text-black bg-white hover:bg-gray-100 transition-colors"
         >
             Back
         </button>

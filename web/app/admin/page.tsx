@@ -150,7 +150,7 @@ function AdminDashboardContent() {
           <button
             onClick={() => updatePage(Math.max(1, page - 1))}
             disabled={page === 1}
-            className="px-6 py-3 border-2 border-black text-sm font-bold uppercase disabled:opacity-30 hover:bg-black hover:text-white transition-colors"
+            className="px-6 py-3 border-2 border-black text-sm font-bold uppercase disabled:opacity-30 cursor-pointer hover:bg-black hover:text-white transition-colors"
           >
             Previous
           </button>
@@ -160,7 +160,7 @@ function AdminDashboardContent() {
           <button
             onClick={() => updatePage(page + 1)}
             disabled={page >= Math.ceil(total / pageSize)}
-            className="px-6 py-3 border-2 border-black text-sm font-bold uppercase disabled:opacity-30 hover:bg-black hover:text-white transition-colors"
+            className="px-6 py-3 border-2 border-black text-sm font-bold uppercase disabled:opacity-30 cursor-pointer hover:bg-black hover:text-white transition-colors"
           >
             Next
           </button>

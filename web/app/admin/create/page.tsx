@@ -246,7 +246,7 @@ export default function CreateSurvey() {
           <button
             type="button"
             onClick={addQuestion}
-            className="w-full py-4 border-2 border-dashed border-gray-400 text-sm font-bold uppercase text-gray-500 hover:border-black hover:text-black hover:bg-gray-50 transition-all"
+            className="w-full py-4 cursor-pointer border-2 border-dashed border-gray-400 text-sm font-bold uppercase text-gray-500 hover:border-black hover:text-black hover:bg-gray-50 transition-all"
           >
             + Add Another Question
           </button>
@@ -255,7 +255,7 @@ export default function CreateSurvey() {
         <div className="flex justify-end pt-8 border-t-2 border-black">
           <button
             type="submit"
-            className="inline-flex justify-center py-4 px-8 border-2 border-black text-sm font-bold uppercase text-white bg-black hover:bg-[#D80000] hover:border-[#D80000] shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+            className="inline-flex justify-center cursor-pointer py-4 px-8 border-2 border-black text-sm font-bold uppercase text-white bg-black hover:bg-[#D80000] hover:border-[#D80000] shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
           >
             Create Survey
           </button>
