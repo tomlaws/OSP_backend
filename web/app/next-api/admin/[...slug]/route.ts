@@ -23,7 +23,7 @@ export async function DELETE(
 
 async function handleRequest(request: NextRequest, params: { slug: string[] }, method: string) {
   const slug = params.slug.join('/');
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const token = process.env.ROOT_TOKEN || '';
 
   const url = `${backendUrl}/admin/${slug}${request.nextUrl.search}`;
