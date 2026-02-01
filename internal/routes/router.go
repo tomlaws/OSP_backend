@@ -41,7 +41,8 @@ func setupAPIRoutes(api *gin.RouterGroup, cfg *config.Config, client *mongo.Clie
 	surveyService := services.NewSurveyService(surveysCollection)
 	surveyHandler := handlers.NewSurveyHandler(surveyService)
 
-	insightService := services.NewInsightService(insightsCollection)
+	chatCompletionService := services.NewChatCompletionService(db.Collection("chat_completion_logs"))
+	insightService := services.NewInsightService(insightsCollection, chatCompletionService)
 	insightHandler := handlers.NewInsightHandler(insightService)
 	// Surveys routes
 	surveys := api.Group("/surveys")

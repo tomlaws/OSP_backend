@@ -20,12 +20,21 @@ type Insight struct {
 }
 
 type InsightBatch struct {
-	BatchNumber      int            `bson:"batch_number" json:"batch_number"`
-	Question         Question       `bson:"question" json:"question"`
-	AggregatedAnswer map[string]int `bson:"aggregated_answer,omitempty" json:"aggregated_answer,omitempty"`
-	TextualAnswers   *[]string      `bson:"textual_answers,omitempty" json:"textual_answers,omitempty"`
-	Summary          *string        `bson:"summary,omitempty" json:"summary,omitempty"`
-	ErrorLog         *string        `bson:"error_log,omitempty" json:"error_log,omitempty"`
+	BatchNumber      int             `bson:"batch_number" json:"batch_number"`
+	Question         Question        `bson:"question" json:"question"`
+	AggregatedAnswer *map[string]int `bson:"aggregated_answer,omitempty" json:"aggregated_answer,omitempty"`
+	TextualAnswers   *[]string       `bson:"textual_answers,omitempty" json:"textual_answers,omitempty"`
+	Summary          *string         `bson:"summary,omitempty" json:"summary,omitempty"`
+	ErrorLog         *string         `bson:"error_log,omitempty" json:"error_log,omitempty"`
+}
+
+type ChatCompletionRequestLog struct {
+	ID          bson.ObjectID           `bson:"_id" json:"id"`
+	InsightID   bson.ObjectID           `bson:"insight_id" json:"insight_id"`
+	BatchNumber int                     `bson:"batch_number" json:"batch_number"`
+	Request     ChatCompletionRequest   `bson:"request" json:"request"`
+	Response    *ChatCompletionResponse `bson:"response,omitempty" json:"response,omitempty"`
+	CreatedAt   time.Time               `bson:"created_at" json:"created_at"`
 }
 
 type ContextType string
