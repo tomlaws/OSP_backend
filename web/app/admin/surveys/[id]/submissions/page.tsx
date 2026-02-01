@@ -15,7 +15,7 @@ export default function SurveySubmissions({ params }: { params: Promise<{ id: st
         try {
             const [surveyRes, submissionsRes] = await Promise.all([
                 fetch(`/next-api/admin/surveys/${id}`),
-                fetch(`/next-api/admin/submissions?survey_id=${id}`)
+                fetch(`/next-api/admin/submissions?surveyId=${id}`)
             ]);
             
             if (surveyRes.ok) {
