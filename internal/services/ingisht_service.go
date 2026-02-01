@@ -231,7 +231,7 @@ func (s *InsightService) ProcessInsight(insight models.Insight) error {
 			// Already processed
 			continue
 		}
-		summary, err := s.processInsightBatch(context.TODO(), insight.ID, insight.ContextType, batch)
+		summary, err := s.processInsightBatch(insight.ID, insight.ContextType, batch)
 		insight.Batches[i].Summary = summary
 		if err != nil {
 			errMsg := err.Error()
@@ -292,7 +292,7 @@ func (s *InsightService) ProcessInsight(insight models.Insight) error {
 	return nil
 }
 
-func (s *InsightService) processInsightBatch(ctx context.Context, insightID bson.ObjectID, contextType models.ContextType, batch models.InsightBatch) (*string, error) {
+func (s *InsightService) processInsightBatch(insightID bson.ObjectID, contextType models.ContextType, batch models.InsightBatch) (*string, error) {
 	// LLM processing
 	var payload string
 
