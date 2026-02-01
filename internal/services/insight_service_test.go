@@ -20,21 +20,21 @@ func (m *MockInsightRepository) Create(ctx context.Context, insight *models.Insi
 	args := m.Called(ctx, insight)
 	return args.Error(0)
 }
-func (m *MockInsightRepository) GetByID(ctx context.Context, id interface{}) (*models.Insight, error) {
+func (m *MockInsightRepository) GetByID(ctx context.Context, id bson.ObjectID) (*models.Insight, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.Insight), args.Error(1)
 }
-func (m *MockInsightRepository) GetInsights(ctx context.Context, offset, limit int64, surveyID *string) ([]*models.Insight, error) {
+func (m *MockInsightRepository) GetInsights(ctx context.Context, offset, limit int64, surveyID *bson.ObjectID) ([]*models.Insight, error) {
 	args := m.Called(ctx, offset, limit, surveyID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).([]*models.Insight), args.Error(1)
 }
-func (m *MockInsightRepository) Update(ctx context.Context, id interface{}, update interface{}) error {
+func (m *MockInsightRepository) Update(ctx context.Context, id bson.ObjectID, update interface{}) error {
 	args := m.Called(ctx, id, update)
 	return args.Error(0)
 }
@@ -81,10 +81,10 @@ func TestService_CreateInsight(t *testing.T) {
 			Questions: []models.Question{},
 		}
 
-		submissions := []models.Submission{}
+		submissions := []*models.Submission{}
 
 		mockSurveyRepo.On("GetByID", mock.Anything, surveyID).Return(survey, nil)
-		mockSubmissionRepo.On("GetBySurveyID", mock.Anything, surveyID).Return(submissions, nil)
+		mockSubmissionRepo.On("GetAllSubmissions", mock.Anything, surveyID).Return(submissions, nil)
 
 		mockInsightRepo.On("Create", mock.Anything, mock.MatchedBy(func(i *models.Insight) bool {
 			return i.SurveyID == surveyID

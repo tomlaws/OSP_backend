@@ -26,7 +26,26 @@ type CreateSubmissionRequest struct {
 	Responses   []SubmissionResponse `json:"responses" binding:"required"`
 }
 
-/* Response models */
 type CreateSubmissionResponse struct {
-	Data *Submission `json:"data"`
+	Data  *Submission `json:"data"`
+	Error string      `json:"error,omitempty"`
+}
+
+type GetSubmissionsRequest struct {
+	SurveyID *string `uri:"surveyID"`
+	Offset   int64   `form:"offset,default=0"`
+	Limit    int64   `form:"limit,default=10"`
+}
+
+type GetSubmissionsResponse struct {
+	Data  []*Submission `json:"data"`
+	Error string        `json:"error,omitempty"`
+}
+
+type DeleteSubmissionRequest struct {
+	ID string `uri:"id" binding:"required"`
+}
+
+type DeleteSubmissionResponse struct {
+	Error string `json:"error,omitempty"`
 }

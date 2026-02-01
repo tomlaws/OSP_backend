@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // MockSurveyService is a mock implementation of ISurveyService
@@ -29,12 +30,33 @@ func (m *MockSurveyService) CreateSurvey(ctx context.Context, req *models.Create
 	return args.Get(0).(*models.Survey), args.Error(1)
 }
 
+func (m *MockSurveyService) ListSurveys(ctx context.Context, offset, limit int64) ([]*models.Survey, error) {
+	args := m.Called(ctx, offset, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*models.Survey), args.Error(1)
+}
+
 func (m *MockSurveyService) GetSurveyByToken(ctx context.Context, token string) (*models.Survey, error) {
 	args := m.Called(ctx, token)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.Survey), args.Error(1)
+}
+
+func (m *MockSurveyService) GetSurveyByID(ctx context.Context, id bson.ObjectID) (*models.Survey, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Survey), args.Error(1)
+}
+
+func (m *MockSurveyService) DeleteSurvey(ctx context.Context, id bson.ObjectID) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
 }
 
 func TestCreateSurvey(t *testing.T) {
@@ -147,7 +169,7 @@ func TestGetSurvey(t *testing.T) {
 		mockService := new(MockSurveyService)
 		handler := NewSurveyHandler(mockService)
 		router := gin.Default()
-		router.GET("/surveys/:token", handler.GetSurvey)
+		router.GET("/surveys/:token", handler.GetSurveyByToken)
 
 		expectedSurvey := &models.Survey{
 			Name:  "Test Survey",
@@ -168,8 +190,7 @@ func TestGetSurvey(t *testing.T) {
 		mockService := new(MockSurveyService)
 		handler := NewSurveyHandler(mockService)
 		router := gin.Default()
-		router.GET("/surveys/:token", handler.GetSurvey)
-
+		router.GET("/surveys/:token", handler.GetSurveyByToken)
 		mockService.On("GetSurveyByToken", mock.Anything, "invalid").Return(nil, errors.New("not found"))
 
 		req, _ := http.NewRequest("GET", "/surveys/invalid", nil)
@@ -177,5 +198,67 @@ func TestGetSurvey(t *testing.T) {
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+}
+
+func TestListSurveys(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	t.Run("Success", func(t *testing.T) {
+		mockService := new(MockSurveyService)
+		handler := NewSurveyHandler(mockService)
+		router := gin.Default()
+		router.GET("/surveys", handler.ListSurveys)
+		expectedSurveys := []*models.Survey{
+			{Name: "Survey1"},
+			{Name: "Survey2"},
+		}
+		mockService.On("ListSurveys", mock.Anything, int64(0), int64(10)).Return(expectedSurveys, nil)
+		req, _ := http.NewRequest("GET", "/surveys?offset=0&limit=10", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+		mockService.AssertExpectations(t)
+	})
+
+	t.Run("ServiceError", func(t *testing.T) {
+		mockService := new(MockSurveyService)
+		handler := NewSurveyHandler(mockService)
+		router := gin.Default()
+		router.GET("/surveys", handler.ListSurveys)
+		mockService.On("ListSurveys", mock.Anything, int64(0), int64(10)).Return(nil, errors.New("db error"))
+		req, _ := http.NewRequest("GET", "/surveys?offset=0&limit=10", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+}
+
+func TestDeleteSurvey(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	t.Run("Success", func(t *testing.T) {
+		mockService := new(MockSurveyService)
+		handler := NewSurveyHandler(mockService)
+		router := gin.Default()
+		router.DELETE("/surveys/:id", handler.DeleteSurvey)
+		surveyID := bson.NewObjectID()
+		mockService.On("DeleteSurvey", mock.Anything, surveyID).Return(nil)
+		req, _ := http.NewRequest("DELETE", "/surveys/"+surveyID.Hex(), nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusNoContent, w.Code)
+		mockService.AssertExpectations(t)
+	})
+
+	t.Run("ServiceError", func(t *testing.T) {
+		mockService := new(MockSurveyService)
+		handler := NewSurveyHandler(mockService)
+		router := gin.Default()
+		router.DELETE("/surveys/:id", handler.DeleteSurvey)
+		surveyID := bson.NewObjectID()
+		mockService.On("DeleteSurvey", mock.Anything, surveyID).Return(errors.New("db error"))
+		req, _ := http.NewRequest("DELETE", "/surveys/"+surveyID.Hex(), nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
 	})
 }

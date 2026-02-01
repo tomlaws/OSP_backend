@@ -22,12 +22,33 @@ func (m *MockSubmissionRepository) Create(ctx context.Context, submission *model
 	return args.Error(0)
 }
 
-func (m *MockSubmissionRepository) GetBySurveyID(ctx context.Context, surveyID interface{}) ([]models.Submission, error) {
+func (m *MockSubmissionRepository) GetAllSubmissions(ctx context.Context, surveyID bson.ObjectID) ([]*models.Submission, error) {
+	args := m.Called(ctx, surveyID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*models.Submission), args.Error(1)
+}
+
+func (m *MockSubmissionRepository) GetSubmissions(ctx context.Context, offset int64, limit int64, surveyID *bson.ObjectID) ([]*models.Submission, error) {
+	args := m.Called(ctx, offset, limit, surveyID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*models.Submission), args.Error(1)
+}
+
+func (m *MockSubmissionRepository) GetBySurveyID(ctx context.Context, surveyID bson.ObjectID) ([]models.Submission, error) {
 	args := m.Called(ctx, surveyID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).([]models.Submission), args.Error(1)
+}
+
+func (m *MockSubmissionRepository) Delete(ctx context.Context, id bson.ObjectID) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
 }
 
 func TestService_CreateSubmission(t *testing.T) {
@@ -300,5 +321,43 @@ func TestService_CreateSubmission(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "missing answer")
+	})
+}
+
+func TestService_GetSubmissionsBySurveyID(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockSubmissionRepo := new(MockSubmissionRepository)
+		mockSurveyRepo := new(MockSurveyRepository)
+		service := NewSubmissionService(mockSubmissionRepo, mockSurveyRepo)
+		surveyID := bson.NewObjectID()
+		expectedSubmissions := []*models.Submission{
+			{ID: bson.NewObjectID()},
+			{ID: bson.NewObjectID()},
+		}
+		mockSubmissionRepo.On("GetSubmissions", mock.Anything, int64(0), int64(10), &surveyID).Return(expectedSubmissions, nil)
+		submissions, err := service.GetSubmissions(context.Background(), 0, 10, &surveyID)
+		assert.NoError(t, err)
+		assert.Equal(t, expectedSubmissions, submissions)
+	})
+}
+
+func TestService_DeleteSubmission(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockSubmissionRepo := new(MockSubmissionRepository)
+		mockSurveyRepo := new(MockSurveyRepository)
+		service := NewSubmissionService(mockSubmissionRepo, mockSurveyRepo)
+		submissionID := bson.NewObjectID()
+		mockSubmissionRepo.On("Delete", mock.Anything, submissionID).Return(nil)
+		err := service.Delete(context.Background(), submissionID)
+		assert.NoError(t, err)
+	})
+	t.Run("RepoError", func(t *testing.T) {
+		mockSubmissionRepo := new(MockSubmissionRepository)
+		mockSurveyRepo := new(MockSurveyRepository)
+		service := NewSubmissionService(mockSubmissionRepo, mockSurveyRepo)
+		submissionID := bson.NewObjectID()
+		mockSubmissionRepo.On("Delete", mock.Anything, submissionID).Return(errors.New("db error"))
+		err := service.Delete(context.Background(), submissionID)
+		assert.Error(t, err)
 	})
 }

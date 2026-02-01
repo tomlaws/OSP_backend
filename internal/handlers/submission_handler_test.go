@@ -30,6 +30,35 @@ func (m *MockSubmissionService) CreateSubmission(ctx context.Context, req *model
 	return args.Get(0).(*models.Submission), args.Error(1)
 }
 
+func (m *MockSubmissionService) GetAllSubmissions(ctx context.Context, surveyID bson.ObjectID) ([]*models.Submission, error) {
+	args := m.Called(ctx, surveyID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*models.Submission), args.Error(1)
+}
+
+func (m *MockSubmissionService) GetSubmissions(ctx context.Context, offset int64, limit int64, surveyID *bson.ObjectID) ([]*models.Submission, error) {
+	args := m.Called(ctx, offset, limit, surveyID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*models.Submission), args.Error(1)
+}
+
+func (m *MockSubmissionService) GetBySurveyID(ctx context.Context, surveyID bson.ObjectID) ([]*models.Submission, error) {
+	args := m.Called(ctx, surveyID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*models.Submission), args.Error(1)
+}
+
+func (m *MockSubmissionService) Delete(ctx context.Context, id bson.ObjectID) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
 func TestCreateSubmission(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 

@@ -13,6 +13,8 @@ import (
 
 type ISubmissionService interface {
 	CreateSubmission(ctx context.Context, req *models.CreateSubmissionRequest) (*models.Submission, error)
+	GetSubmissions(ctx context.Context, offset int64, limit int64, surveyID *bson.ObjectID) ([]*models.Submission, error)
+	Delete(ctx context.Context, id bson.ObjectID) error
 }
 
 type SubmissionService struct {
@@ -99,4 +101,12 @@ func (s *SubmissionService) CreateSubmission(ctx context.Context, req *models.Cr
 		return nil, err
 	}
 	return submission, nil
+}
+
+func (s *SubmissionService) GetSubmissions(ctx context.Context, offset int64, limit int64, surveyID *bson.ObjectID) ([]*models.Submission, error) {
+	return s.submissionRepo.GetSubmissions(ctx, offset, limit, surveyID)
+}
+
+func (s *SubmissionService) Delete(ctx context.Context, id bson.ObjectID) error {
+	return s.submissionRepo.Delete(ctx, id)
 }

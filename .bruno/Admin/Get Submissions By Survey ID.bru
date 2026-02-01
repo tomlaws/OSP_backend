@@ -1,17 +1,17 @@
 meta {
-  name: Get Insight
+  name: Get Submissions By Survey ID
   type: http
-  seq: 8
+  seq: 6
 }
 
 get {
-  url: {{BASE_URL}}/api/admin/insights?surveyId=697ec2067cd24f1b1553146e
+  url: {{BASE_URL}}/api/admin/submissions?surveyId=697eed90c2dce6da4eb0034e
   body: json
   auth: bearer
 }
 
 params:query {
-  surveyId: 697ec2067cd24f1b1553146e
+  surveyId: 697eed90c2dce6da4eb0034e
 }
 
 auth:bearer {

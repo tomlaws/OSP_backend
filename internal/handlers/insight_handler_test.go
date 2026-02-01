@@ -31,12 +31,20 @@ func (m *MockInsightService) CreateInsight(ctx context.Context, req *models.Crea
 	return args.Get(0).(*models.Insight), args.Error(1)
 }
 
-func (m *MockInsightService) GetInsights(ctx context.Context, offset, limit int64, surveyID *string) ([]*models.Insight, error) {
+func (m *MockInsightService) GetInsights(ctx context.Context, offset, limit int64, surveyID *bson.ObjectID) ([]*models.Insight, error) {
 	args := m.Called(ctx, offset, limit, surveyID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).([]*models.Insight), args.Error(1)
+}
+
+func (m *MockInsightService) GetInsight(ctx context.Context, id bson.ObjectID) (*models.Insight, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Insight), args.Error(1)
 }
 
 func (m *MockInsightService) ProcessInsight(insightID bson.ObjectID) error {
@@ -118,7 +126,7 @@ func TestGetInsights(t *testing.T) {
 			{ID: bson.NewObjectID()},
 		}
 
-		mockService.On("GetInsights", mock.Anything, int64(0), int64(10), (*string)(nil)).Return(expectedInsights, nil)
+		mockService.On("GetInsights", mock.Anything, int64(0), int64(10), (*bson.ObjectID)(nil)).Return(expectedInsights, nil)
 
 		req, _ := http.NewRequest("GET", "/insights?offset=0&limit=10", nil)
 		w := httptest.NewRecorder()

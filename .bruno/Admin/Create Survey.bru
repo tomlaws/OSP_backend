@@ -1,13 +1,17 @@
 meta {
   name: Create Survey
   type: http
-  seq: 3
+  seq: 1
 }
 
 post {
-  url: {{BASE_URL}}/api/surveys
+  url: {{BASE_URL}}/api/admin/surveys
   body: json
-  auth: inherit
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{ROOT_TOKEN}}
 }
 
 body:json {

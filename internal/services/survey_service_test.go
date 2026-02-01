@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // MockSurveyRepository is a mock implementation of SurveyRepository
@@ -21,6 +22,14 @@ func (m *MockSurveyRepository) Create(ctx context.Context, survey *models.Survey
 	return args.Error(0)
 }
 
+func (m *MockSurveyRepository) List(ctx context.Context, offset, limit int64) ([]*models.Survey, error) {
+	args := m.Called(ctx, offset, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*models.Survey), args.Error(1)
+}
+
 func (m *MockSurveyRepository) GetByToken(ctx context.Context, token string) (*models.Survey, error) {
 	args := m.Called(ctx, token)
 	if args.Get(0) == nil {
@@ -29,12 +38,17 @@ func (m *MockSurveyRepository) GetByToken(ctx context.Context, token string) (*m
 	return args.Get(0).(*models.Survey), args.Error(1)
 }
 
-func (m *MockSurveyRepository) GetByID(ctx context.Context, id interface{}) (*models.Survey, error) {
+func (m *MockSurveyRepository) GetByID(ctx context.Context, id bson.ObjectID) (*models.Survey, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.Survey), args.Error(1)
+}
+
+func (m *MockSurveyRepository) Delete(ctx context.Context, id bson.ObjectID) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
 }
 
 func TestService_CreateSurvey(t *testing.T) {
@@ -92,5 +106,58 @@ func TestService_GetSurveyByToken(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedSurvey, survey)
+	})
+}
+
+func TestService_GetSurveyByID(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockRepo := new(MockSurveyRepository)
+		service := NewSurveyService(mockRepo)
+
+		expectedSurvey := &models.Survey{ID: bson.NewObjectID()}
+		mockRepo.On("GetByID", mock.Anything, expectedSurvey.ID).Return(expectedSurvey, nil)
+
+		survey, err := service.GetSurveyByID(context.Background(), expectedSurvey.ID)
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedSurvey, survey)
+	})
+}
+
+func TestService_ListSurveys(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockRepo := new(MockSurveyRepository)
+		service := NewSurveyService(mockRepo)
+		expectedSurveys := []*models.Survey{
+			{ID: bson.NewObjectID()},
+			{ID: bson.NewObjectID()},
+		}
+		mockRepo.On("List", mock.Anything, int64(0), int64(10)).Return(expectedSurveys, nil)
+
+		surveys, err := service.ListSurveys(context.Background(), 0, 10)
+		assert.NoError(t, err)
+		assert.Equal(t, expectedSurveys, surveys)
+	})
+}
+
+func TestService_DeleteSurvey(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockRepo := new(MockSurveyRepository)
+		service := NewSurveyService(mockRepo)
+		surveyID := bson.NewObjectID()
+
+		mockRepo.On("Delete", mock.Anything, surveyID).Return(nil)
+
+		err := service.DeleteSurvey(context.Background(), surveyID)
+		assert.NoError(t, err)
+	})
+	t.Run("RepoError", func(t *testing.T) {
+		mockRepo := new(MockSurveyRepository)
+		service := NewSurveyService(mockRepo)
+		surveyID := bson.NewObjectID()
+		mockRepo.On("Delete", mock.Anything, surveyID).Return(errors.New("db error"))
+
+		err := service.DeleteSurvey(context.Background(), surveyID)
+		assert.Error(t, err)
 	})
 }

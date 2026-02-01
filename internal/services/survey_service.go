@@ -14,7 +14,10 @@ import (
 // ISurveyService defines the business logic for survey operations
 type ISurveyService interface {
 	CreateSurvey(ctx context.Context, req *models.CreateSurveyRequest) (*models.Survey, error)
+	ListSurveys(ctx context.Context, offset, limit int64) ([]*models.Survey, error)
 	GetSurveyByToken(ctx context.Context, token string) (*models.Survey, error)
+	GetSurveyByID(ctx context.Context, id bson.ObjectID) (*models.Survey, error)
+	DeleteSurvey(ctx context.Context, id bson.ObjectID) error
 }
 
 type SurveyService struct {
@@ -62,6 +65,20 @@ func generateRandomToken(i int) string {
 	return sb.String()
 }
 
+func (s *SurveyService) ListSurveys(ctx context.Context, offset, limit int64) ([]*models.Survey, error) {
+	// For simplicity, assuming the repository has a method to list surveys with pagination
+	// You may need to implement this method in the SurveyRepository interface and its Mongo implementation
+	return s.repo.List(ctx, offset, limit)
+}
+
 func (s *SurveyService) GetSurveyByToken(ctx context.Context, token string) (*models.Survey, error) {
 	return s.repo.GetByToken(ctx, token)
+}
+
+func (s *SurveyService) GetSurveyByID(ctx context.Context, id bson.ObjectID) (*models.Survey, error) {
+	return s.repo.GetByID(ctx, id)
+}
+
+func (s *SurveyService) DeleteSurvey(ctx context.Context, id bson.ObjectID) error {
+	return s.repo.Delete(ctx, id)
 }

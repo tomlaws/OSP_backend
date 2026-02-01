@@ -15,7 +15,8 @@ import (
 
 type IInsightService interface {
 	CreateInsight(ctx context.Context, req *models.CreateInsightRequest) (*models.Insight, error)
-	GetInsights(ctx context.Context, offset, limit int64, surveyID *string) ([]*models.Insight, error)
+	GetInsights(ctx context.Context, offset, limit int64, surveyID *bson.ObjectID) ([]*models.Insight, error)
+	GetInsight(ctx context.Context, id bson.ObjectID) (*models.Insight, error)
 	ProcessInsight(insightID bson.ObjectID) error
 	RegisterHandlers(mux *asynq.ServeMux)
 }
@@ -100,13 +101,17 @@ func (s *InsightService) CreateInsight(ctx context.Context, req *models.CreateIn
 }
 
 // Retrieve insights by using offset and limit for pagination
-func (s *InsightService) GetInsights(ctx context.Context, offset, limit int64, surveyID *string) ([]*models.Insight, error) {
+func (s *InsightService) GetInsights(ctx context.Context, offset, limit int64, surveyID *bson.ObjectID) ([]*models.Insight, error) {
 	return s.insightRepo.GetInsights(ctx, offset, limit, surveyID)
+}
+
+func (s *InsightService) GetInsight(ctx context.Context, id bson.ObjectID) (*models.Insight, error) {
+	return s.insightRepo.GetByID(ctx, id)
 }
 
 func (s *InsightService) preprocessInsight(ctx context.Context, insight *models.Insight) error {
 	// Get all submissions for the survey
-	submissions, err := s.submissionRepo.GetBySurveyID(ctx, insight.SurveyID)
+	submissions, err := s.submissionRepo.GetAllSubmissions(ctx, insight.SurveyID)
 	if err != nil {
 		return err
 	}

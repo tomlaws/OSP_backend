@@ -11,9 +11,9 @@ import (
 
 type InsightRepository interface {
 	Create(ctx context.Context, insight *models.Insight) error
-	GetByID(ctx context.Context, id interface{}) (*models.Insight, error)
-	GetInsights(ctx context.Context, offset, limit int64, surveyID *string) ([]*models.Insight, error)
-	Update(ctx context.Context, id interface{}, update interface{}) error
+	GetByID(ctx context.Context, id bson.ObjectID) (*models.Insight, error)
+	GetInsights(ctx context.Context, offset, limit int64, surveyID *bson.ObjectID) ([]*models.Insight, error)
+	Update(ctx context.Context, id bson.ObjectID, update interface{}) error
 }
 
 type MongoInsightRepository struct {
@@ -31,7 +31,7 @@ func (r *MongoInsightRepository) Create(ctx context.Context, insight *models.Ins
 	return err
 }
 
-func (r *MongoInsightRepository) GetByID(ctx context.Context, id interface{}) (*models.Insight, error) {
+func (r *MongoInsightRepository) GetByID(ctx context.Context, id bson.ObjectID) (*models.Insight, error) {
 	var insight models.Insight
 	err := r.collection.FindOne(ctx, bson.M{"_id": id}).Decode(&insight)
 	if err != nil {
@@ -40,14 +40,10 @@ func (r *MongoInsightRepository) GetByID(ctx context.Context, id interface{}) (*
 	return &insight, nil
 }
 
-func (r *MongoInsightRepository) GetInsights(ctx context.Context, offset, limit int64, surveyID *string) ([]*models.Insight, error) {
+func (r *MongoInsightRepository) GetInsights(ctx context.Context, offset, limit int64, surveyID *bson.ObjectID) ([]*models.Insight, error) {
 	filter := bson.M{}
 	if surveyID != nil {
-		bsonSurveyID, err := bson.ObjectIDFromHex(*surveyID)
-		if err != nil {
-			return nil, err
-		}
-		filter["survey_id"] = bsonSurveyID
+		filter["survey_id"] = *surveyID
 	}
 
 	opts := options.Find().
@@ -76,7 +72,7 @@ func (r *MongoInsightRepository) GetInsights(ctx context.Context, offset, limit 
 	return insights, nil
 }
 
-func (r *MongoInsightRepository) Update(ctx context.Context, id interface{}, update interface{}) error {
+func (r *MongoInsightRepository) Update(ctx context.Context, id bson.ObjectID, update interface{}) error {
 	_, err := r.collection.UpdateByID(ctx, id, update)
 	return err
 }

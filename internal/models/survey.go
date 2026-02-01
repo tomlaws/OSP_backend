@@ -52,19 +52,55 @@ type LikertSpecification struct {
 	MaxLabel *string `bson:"max_label" json:"max_label"`
 }
 
-/* Request models */
-type CreateSurveyRequest struct {
-	Name      string          `json:"name" binding:"required"`
-	Questions []QuestionInput `json:"questions" binding:"required,dive"`
-}
-
 type QuestionInput struct {
 	Type          QuestionType          `json:"type" binding:"required,oneof=TEXTBOX MULTIPLE_CHOICE LIKERT"`
 	Text          string                `json:"text" binding:"required"`
 	Specification QuestionSpecification `json:"specification" binding:"required"`
 }
 
-/* Response models */
+/* Request models */
+type CreateSurveyRequest struct {
+	Name      string          `json:"name" binding:"required"`
+	Questions []QuestionInput `json:"questions" binding:"required,dive"`
+}
+
+type CreateSurveyResponse struct {
+	Data  *Survey `json:"data"`
+	Error string  `json:"error,omitempty"`
+}
+
+type ListSurveysRequest struct {
+	Offset int64 `form:"offset,default=0"`
+	Limit  int64 `form:"limit,default=10"`
+}
+
+type ListSurveysResponse struct {
+	Data  []*Survey `json:"data"`
+	Error string    `json:"error,omitempty"`
+}
+
+type GetSurveyByTokenRequest struct {
+	Token string `uri:"token" binding:"required"`
+}
+
+type GetSurveyByTokenResponse struct {
+	Data  *Survey `json:"data"`
+	Error string  `json:"error,omitempty"`
+}
+
+type GetSurveyRequest struct {
+	ID string `uri:"id" binding:"required"`
+}
+
 type GetSurveyResponse struct {
-	Data *Survey `json:"data"`
+	Data  *Survey `json:"data"`
+	Error string  `json:"error,omitempty"`
+}
+
+type DeleteSurveyRequest struct {
+	ID string `uri:"id" binding:"required"`
+}
+
+type DeleteSurveyResponse struct {
+	Error string `json:"error,omitempty"`
 }

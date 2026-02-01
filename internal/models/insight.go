@@ -52,6 +52,11 @@ type CreateInsightRequest struct {
 	ContextType ContextType   `json:"context_type" binding:"required,oneof=COURSE_FEEDBACK PRODUCT_SATISFACTION EMPLOYEE_ENGAGEMENT EVENT_FEEDBACK"`
 }
 
+type CreateInsightResponse struct {
+	Data  *Insight `json:"data"`
+	Error string   `json:"error,omitempty"`
+}
+
 type GetInsightsRequest struct {
 	Offset   int64   `form:"offset,default=0"`
 	Limit    int64   `form:"limit,default=10"`
@@ -59,5 +64,15 @@ type GetInsightsRequest struct {
 }
 
 type GetInsightsResponse struct {
-	Data []*Insight `json:"data"`
+	Data  []*Insight `json:"data"`
+	Error string     `json:"error,omitempty"`
+}
+
+type GetInsightRequest struct {
+	ID string `uri:"id" binding:"required"`
+}
+
+type GetInsightResponse struct {
+	Data  *Insight `json:"data"`
+	Error string   `json:"error,omitempty"`
 }
