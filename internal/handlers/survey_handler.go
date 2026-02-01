@@ -96,7 +96,9 @@ func (h *SurveyHandler) GetSurveyByToken(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, survey)
+	c.JSON(http.StatusOK, &models.GetSurveyByTokenResponse{
+		Data: survey,
+	})
 }
 
 func (h *SurveyHandler) GetSurvey(c *gin.Context) {
