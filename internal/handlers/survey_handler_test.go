@@ -30,12 +30,12 @@ func (m *MockSurveyService) CreateSurvey(ctx context.Context, req *models.Create
 	return args.Get(0).(*models.Survey), args.Error(1)
 }
 
-func (m *MockSurveyService) ListSurveys(ctx context.Context, offset, limit int64) ([]*models.Survey, error) {
+func (m *MockSurveyService) ListSurveys(ctx context.Context, offset, limit int64) ([]*models.Survey, int64, error) {
 	args := m.Called(ctx, offset, limit)
 	if args.Get(0) == nil {
-		return nil, args.Error(1)
+		return nil, 0, args.Error(2)
 	}
-	return args.Get(0).([]*models.Survey), args.Error(1)
+	return args.Get(0).([]*models.Survey), args.Get(1).(int64), args.Error(2)
 }
 
 func (m *MockSurveyService) GetSurveyByToken(ctx context.Context, token string) (*models.Survey, error) {
@@ -212,7 +212,7 @@ func TestListSurveys(t *testing.T) {
 			{Name: "Survey1"},
 			{Name: "Survey2"},
 		}
-		mockService.On("ListSurveys", mock.Anything, int64(0), int64(10)).Return(expectedSurveys, nil)
+		mockService.On("ListSurveys", mock.Anything, int64(0), int64(10)).Return(expectedSurveys, int64(2), nil)
 		req, _ := http.NewRequest("GET", "/surveys?offset=0&limit=10", nil)
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
@@ -225,7 +225,7 @@ func TestListSurveys(t *testing.T) {
 		handler := NewSurveyHandler(mockService)
 		router := gin.Default()
 		router.GET("/surveys", handler.ListSurveys)
-		mockService.On("ListSurveys", mock.Anything, int64(0), int64(10)).Return(nil, errors.New("db error"))
+		mockService.On("ListSurveys", mock.Anything, int64(0), int64(10)).Return(nil, int64(0), errors.New("db error"))
 		req, _ := http.NewRequest("GET", "/surveys?offset=0&limit=10", nil)
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)

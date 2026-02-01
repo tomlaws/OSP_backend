@@ -70,14 +70,14 @@ func (h *SurveyHandler) ListSurveys(c *gin.Context) {
 		})
 		return
 	}
-	surveys, err := h.surveyService.ListSurveys(c.Request.Context(), req.Offset, req.Limit)
+	surveys, total, err := h.surveyService.ListSurveys(c.Request.Context(), req.Offset, req.Limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, &models.ListSurveysResponse{
 			Error: "Failed to retrieve surveys",
 		})
 		return
 	}
-	c.JSON(http.StatusOK, models.ListSurveysResponse{Data: surveys})
+	c.JSON(http.StatusOK, models.ListSurveysResponse{Data: surveys, Total: total})
 }
 
 func (h *SurveyHandler) GetSurveyByToken(c *gin.Context) {

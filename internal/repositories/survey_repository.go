@@ -11,7 +11,7 @@ import (
 
 type SurveyRepository interface {
 	Create(ctx context.Context, survey *models.Survey) error
-	List(ctx context.Context, offset, limit int64) ([]*models.Survey, error)
+	List(ctx context.Context, offset, limit int64) ([]*models.Survey, int64, error)
 	GetByToken(ctx context.Context, token string) (*models.Survey, error)
 	GetByID(ctx context.Context, id bson.ObjectID) (*models.Survey, error)
 	Delete(ctx context.Context, id bson.ObjectID) error
@@ -32,22 +32,28 @@ func (r *MongoSurveyRepository) Create(ctx context.Context, survey *models.Surve
 	return err
 }
 
-func (r *MongoSurveyRepository) List(ctx context.Context, offset, limit int64) ([]*models.Survey, error) {
+func (r *MongoSurveyRepository) List(ctx context.Context, offset, limit int64) ([]*models.Survey, int64, error) {
+	total, err := r.collection.CountDocuments(ctx, bson.M{})
+	if err != nil {
+		return nil, 0, err
+	}
+
 	opts := options.Find().
+		SetSort(bson.D{{"created_at", -1}}).
 		SetSkip(offset).
 		SetLimit(limit)
 
 	cursor, err := r.collection.Find(ctx, bson.M{}, opts)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer cursor.Close(ctx)
 
 	var surveys []*models.Survey
 	if err := cursor.All(ctx, &surveys); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return surveys, nil
+	return surveys, total, nil
 }
 
 func (r *MongoSurveyRepository) GetByToken(ctx context.Context, token string) (*models.Survey, error) {

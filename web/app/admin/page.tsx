@@ -8,21 +8,27 @@ export default function AdminDashboard() {
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [insights, setInsights] = useState<Insight[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const pageSize = 5;
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [page]);
 
   const fetchData = async () => {
+    setLoading(true);
     try {
+      const offset = (page - 1) * pageSize;
       const [surveysRes, insightsRes] = await Promise.all([
-        fetch('/next-api/admin/surveys'),
+        fetch(`/next-api/admin/surveys?offset=${offset}&limit=${pageSize}`),
         fetch('/next-api/admin/insights'),
       ]);
 
       if (surveysRes.ok) {
         const data = await surveysRes.json();
         setSurveys(data.data || []);
+        setTotal(data.total || 0);
       }
       if (insightsRes.ok) {
         const data = await insightsRes.json();
@@ -32,27 +38,6 @@ export default function AdminDashboard() {
       console.error('Failed to fetch data', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleGenerateInsight = async (surveyId: string) => {
-    try {
-      const res = await fetch('/next-api/admin/insights', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          survey_id: surveyId,
-          context_type: 'COURSE_FEEDBACK', // Default or selector
-        }),
-      });
-      if (res.ok) {
-        alert('Insight generation started!');
-        fetchData();
-      } else {
-        alert('Failed to start generation');
-      }
-    } catch (e) {
-      alert('Error generating insight');
     }
   };
 
@@ -132,12 +117,12 @@ export default function AdminDashboard() {
                           View Insights ({insight.status})
                         </Link>
                       ) : (
-                        <button
-                          onClick={() => handleGenerateInsight(survey.id)}
+                        <Link 
+                          href={`/admin/surveys/${survey.id}/generate-insight`}
                           className="text-blue-600 hover:text-blue-900"
                         >
                           Generate Insight
-                        </button>
+                        </Link>
                       )}
                       
                    </div>
@@ -152,6 +137,28 @@ export default function AdminDashboard() {
           )}
         </ul>
       </div>
+
+      {total > pageSize && (
+        <div className="flex justify-between items-center mt-4 pb-10">
+          <button
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="px-4 py-2 border rounded-md bg-white disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <span>
+            Page {page} of {Math.ceil(total / pageSize)}
+          </span>
+          <button
+            onClick={() => setPage(p => p + 1)}
+            disabled={page >= Math.ceil(total / pageSize)}
+            className="px-4 py-2 border rounded-md bg-white disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 }
