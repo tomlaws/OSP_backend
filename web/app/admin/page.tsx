@@ -1,16 +1,35 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Survey, Insight } from '@/types';
 
 export default function AdminDashboard() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AdminDashboardContent />
+    </Suspense>
+  );
+}
+
+function AdminDashboardContent() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  
+  const page = Number(searchParams.get('page')) || 1;
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [insights, setInsights] = useState<Insight[]>([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const pageSize = 5;
+
+  const updatePage = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', newPage.toString());
+    router.push(`${pathname}?${params.toString()}`);
+  };
 
   useEffect(() => {
     fetchData();
@@ -141,7 +160,7 @@ export default function AdminDashboard() {
       {total > pageSize && (
         <div className="flex justify-between items-center mt-4 pb-10">
           <button
-            onClick={() => setPage(p => Math.max(1, p - 1))}
+            onClick={() => updatePage(Math.max(1, page - 1))}
             disabled={page === 1}
             className="px-4 py-2 border rounded-md bg-white disabled:opacity-50"
           >
@@ -151,7 +170,7 @@ export default function AdminDashboard() {
             Page {page} of {Math.ceil(total / pageSize)}
           </span>
           <button
-            onClick={() => setPage(p => p + 1)}
+            onClick={() => updatePage(page + 1)}
             disabled={page >= Math.ceil(total / pageSize)}
             className="px-4 py-2 border rounded-md bg-white disabled:opacity-50"
           >
