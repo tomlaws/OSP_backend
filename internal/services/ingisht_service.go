@@ -39,6 +39,12 @@ func NewInsightService(collection *mongo.Collection, chatCompletionService *Chat
 }
 
 func (s *InsightService) CreateInsight(ctx context.Context, req *models.CreateInsightRequest) (*models.Insight, error) {
+	// Check survey existence
+	var survey models.Survey
+	err := s.collection.Database().Collection("surveys").FindOne(ctx, bson.M{"_id": req.SurveyID}).Decode(&survey)
+	if err != nil {
+		return nil, fmt.Errorf("survey not found")
+	}
 	insight := &models.Insight{
 		ID:          bson.NewObjectID(),
 		SurveyID:    req.SurveyID,
@@ -48,7 +54,7 @@ func (s *InsightService) CreateInsight(ctx context.Context, req *models.CreateIn
 		UpdatedAt:   time.Now(),
 	}
 	s.preprocessInsight(insight)
-	_, err := s.collection.InsertOne(ctx, insight)
+	_, err = s.collection.InsertOne(ctx, insight)
 	if err != nil {
 		return nil, err
 	}

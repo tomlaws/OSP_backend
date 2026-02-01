@@ -25,7 +25,7 @@ func (s *SubmissionService) CreateSubmission(ctx context.Context, req *models.Cr
 	var survey models.Survey
 	err := s.collection.Database().Collection("surveys").FindOne(ctx, bson.M{"token": req.SurveyToken}).Decode(&survey)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("Survey not found")
 	}
 	// Map question ID to answer
 	questionMap := make(map[bson.ObjectID]string)
