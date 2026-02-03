@@ -336,12 +336,12 @@ This project leverages Artificial Intelligence to generate actionable insights f
 ### Key Capabilities
 
 *   **Scalability**: The batching system ensures that large numbers of responses can be processed without hitting token limits.
-
 ## Future Work / Limitation
 *   **Test Verification**: Due to time constraints, currently only happy paths are tested, and not all AI-generated automated tests have been manually verified for edge cases.
 *   **Survey Editing Strategy**: The ability to edit surveys is currently not implemented. Future support for this is planned to function as a "clone and modify" feature rather than in-place editing. This approach ensures data integrity by preserving the structure of surveys that already have submissions, avoiding inconsistencies between old responses and modified questions.
 *   **Model Flexibility**: Support for multiple AI providers and models.
 *   **Enhanced Prompting**: Dynamic prompt generation based on survey type.
+*   **Error Handling**: The current error handling implementation is rudimentary and needs further improvement in the future
 
 ## AI Usage Acknowledgment
 
