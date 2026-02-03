@@ -230,7 +230,69 @@ Retrieve a specific insight result.
 
 ---
 
+## Example curl or HTTP requests for common flows
+Here is an example end-to-end flow using `curl`.
 
+**1. Create a survey (Admin)**
+
+```bash
+curl -X POST http://localhost:8080/api/admin/surveys \
+  -H "Authorization: Bearer root-token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Product Satisfaction Survey",
+    "questions": [
+      {
+        "type": "TEXTBOX",
+        "text": "What did you like most?",
+        "specification": { "max_length": 500 }
+      }
+    ]
+  }'
+```
+*Response will contain the `id` (e.g., `67af9...`) and `token` (e.g., `550e8`).*
+
+**2. Submit a response (Public)**
+
+Use the `token` from the previous step.
+
+```bash
+curl -X POST http://localhost:8080/api/submissions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "survey_token": "550e8",
+    "responses": [
+      {
+        "question_id": "qid_from_survey_creation",
+        "answer": "The user interface is very clean."
+      }
+    ]
+  }'
+```
+
+**3. Trigger Insight Generation (Admin)**
+
+Use the `id` from step 1.
+
+```bash
+curl -X POST http://localhost:8080/api/admin/insights \
+  -H "Authorization: Bearer root-token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "survey_id": "67af9...",
+    "context_type": "PRODUCT_SATISFACTION"
+  }'
+```
+*Response will contain an `insight_id`.*
+
+**4. Check Insight Result (Admin)**
+
+Wait a few seconds for the background job to complete, then use the `insight_id`.
+
+```bash
+curl -X GET http://localhost:8080/api/admin/insights/insight_id_here \
+  -H "Authorization: Bearer root-token"
+```
 
 ## AI Integration Details
 
@@ -249,13 +311,21 @@ This project leverages Artificial Intelligence to generate actionable insights f
 ### Providers & Models
 
 *   **Provider**: [GitHub Models](https://github.com/marketplace/models)
+    *   **Free Tier Availability**: Utilizes a free tier suitable for initial prototyping usage without upfront costs.
+    *   **Accessibility in Hong Kong**: Direct access supported in Hong Kong; no VPN is required, simplifying local development workflows.
+    *   **GitHub Copilot Integration**: Leverages my existing GitHub Copilot subscription, which provides higher rate limits compared to standard free tier.
 *   **Model**: `openai/gpt-4o-mini`
 *   **Authentication**: Requires a valid `GITHUB_TOKEN` in the environment variables.
 
 ### Key Capabilities
 
-*   **Context Awareness**: The AI is prompted with specific contexts (e.g., Course Feedback, Employee Engagement) to tailor the analysis.
 *   **Scalability**: The batching system ensures that large numbers of responses can be processed without hitting token limits.
+
+## Future Work / Limitation
+*   **Test Verification**: Due to time constraints, currently only happy paths are tested, and not all AI-generated automated tests have been manually verified for edge cases.
+*   **Survey Editing Strategy**: The ability to edit surveys is currently not implemented. Future support for this is planned to function as a "clone and modify" feature rather than in-place editing. This approach ensures data integrity by preserving the structure of surveys that already have submissions, avoiding inconsistencies between old responses and modified questions.
+*   **Model Flexibility**: Support for multiple AI providers and models.
+*   **Enhanced Prompting**: Dynamic prompt generation based on survey type.
 
 ## AI Usage Acknowledgment
 
