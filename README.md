@@ -5,7 +5,23 @@
 - [Introduction](#introduction)
 - [Tech Stack](#tech-stack)
 - [How to run](#how-to-run)
+  - [1) Configure environment variables](#1-configure-environment-variables)
+  - [2) Start dependencies](#2-start-dependencies)
+  - [3) Run the server](#3-run-the-server)
 - [API Documentation](#api-documentation)
+  - [Base URL](#base-url)
+  - [Admin Authentication](#admin-authentication)
+  - [Health Check](#health-check)
+  - [Surveys](#surveys)
+  - [Submissions](#submissions)
+  - [Insights](#insights)
+- [Example curl or HTTP requests for common flows](#example-curl-or-http-requests-for-common-flows)
+- [AI Integration Details](#ai-integration-details)
+  - [Architecture](#architecture)
+  - [Providers & Models](#providers--models)
+  - [Key Capabilities](#key-capabilities)
+- [Future Work / Limitation](#future-work--limitation)
+- [AI Usage Acknowledgment](#ai-usage-acknowledgment)
 
 ## Introduction
 OSP Backend is the backend service for the OSP (Open Survey Platform) application. It provides RESTful APIs for managing surveys, collecting submissions, and generating insights using AI.
